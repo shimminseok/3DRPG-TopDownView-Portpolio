@@ -17,6 +17,9 @@ public class GameManager : MonoBehaviour
         }
         else
             Destroy(gameObject);
+
+
+        SaveLoadManager.ResetAllSaves();
     }
     void Start()
     {
@@ -26,12 +29,11 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.F1))
-        {
-            PlayerController.Instance.characterStat.Attack.ModifyBaseValue(10, 1, int.MaxValue);
-        }
+
     }
+    private void OnApplicationQuit()
+    {
 
-
+    }
 
 }

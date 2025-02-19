@@ -2,10 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class UIHeader : MonoBehaviour, IPointerDownHandler, IDragHandler
 {
-
     [SerializeField] Transform targetTrans;
 
     Vector2 beginPoint;

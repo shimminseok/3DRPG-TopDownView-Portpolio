@@ -10,6 +10,7 @@ public class ItemTable : ScriptableObject
 
     Dictionary<int, ItemData> itemDataDic = new Dictionary<int, ItemData>();
 
+    public List<ItemData> Data => data;
     private void OnEnable()
     {
         itemDataDic.Clear();

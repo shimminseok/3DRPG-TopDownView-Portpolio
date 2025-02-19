@@ -35,8 +35,9 @@ public class UIDescription : UIPanel
     public bool isInputNextDialogue;
 
 
-    void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         if (Instance == null)
         {
             Instance = this;
@@ -55,6 +56,7 @@ public class UIDescription : UIPanel
     public void ResetDescription()
     {
         data = null;
+
         npcName.text = string.Empty;
         decription.text = string.Empty;
     }
@@ -101,24 +103,43 @@ public class UIDescription : UIPanel
     {
         uiQuestAccept.OnClickAvailQuest(controller);
     }
+    public void OnClickEnhanceBtn()
+    {
+        EnhanceNPC fuction = controller.GetComponent<EnhanceNPC>();
+        if(fuction != null)
+        {
+            UIManager.Instance.AllClosePanel();
+            fuction.Execute();
+        }
+    }
     public void OnClickAcceptQuest(QuestData _data)
     {
-        StartCoroutine(StartDialogue(_data.PreQuestDialogues, () => uiQuestAccept.ShowQuestAcceptUI(_data)));
+        SaveQuestData acceptSaveData = QuestManager.Instance.GetActiveQuest(_data.Cartegory, _data.ID);
+        if(acceptSaveData == null)
+            StartCoroutine(StartDialogue(_data.PreQuestDialogues, () => uiQuestAccept.ShowQuestAcceptUI(_data)));
+        else
+        {
+            if(acceptSaveData.IsCompleted)
+            {
+                StartCoroutine(StartDialogue(_data.PostQuestDialogues, () => uiQuestAccept.ShowQuestAcceptUI(_data)));
+            }
+        }
     }
 
     public override void OnClickOpenButton()
     {
         base.OnClickOpenButton();
-        CameraController.Instance.ChangeDialogueCamera(true);
+        CameraController.Instance.ChangeDialogueCamera(controller.dialogueCamTrans, true);
         UIHUD.Instance.gameObject.SetActive(false);
     }
     public override void OnClickCloseButton()
     {
         base.OnClickCloseButton();
-        CameraController.Instance.ChangeDialogueCamera(false);
+        CameraController.Instance.ChangeDialogueCamera(controller.dialogueCamTrans,false);
         ResetDescription();
         isDialogueRunning = false;
         UIHUD.Instance.gameObject.SetActive(true);
+        uiQuestAccept.HideAcceptQuestSlot();
 
     }
 }

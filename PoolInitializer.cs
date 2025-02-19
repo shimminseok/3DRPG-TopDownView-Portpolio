@@ -16,8 +16,7 @@ public class PoolInitializer : MonoBehaviour
     [SerializeField] PoolType poolType;
     [SerializeField] int poolCount;
     void Start()
-    {
-
+    { 
         string path = $"{poolType}/{gameObject.name}";
         GameObject go = Resources.Load<GameObject>(path);
         if (go == null)

@@ -28,12 +28,13 @@ public class UIQuest : UIPanel
     int childrenCount = 0;
 
     Dictionary<QuestStatus, List<SaveQuestData>> questStatusDic = new Dictionary<QuestStatus, List<SaveQuestData>>();
+    List<QuestListSlot> progressQuestSlots = new List<QuestListSlot>();
     List<SaveQuestData> progressQuestData = new List<SaveQuestData>();
     List<SaveQuestData> completedQuestData = new List<SaveQuestData>();
 
-
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         if (Instance == null)
         {
             Instance = this;
@@ -44,36 +45,31 @@ public class UIQuest : UIPanel
     }
     void Start()
     {
+        QuestManager.Instance.OnQuestAccepted += AcceptQuest;
+        QuestManager.Instance.OnQuestAbandoned += AbandonQuest;
     }
-    public void CreateQuestSlot()
+    public void AcceptQuest(SaveQuestData _data)
     {
-
-
-        for (int i = 0; i < Enum.GetValues(typeof(QuestCategory)).Length; i++)
+        if(_data.Status == QuestStatus.InProgress && !progressQuestData.Exists(x => x.QuestID == _data.QuestID))
         {
-            var activeQuest = QuestManager.Instance.GetActiveQuests((QuestCategory)i);
-            if (activeQuest != null)
-            {
-                foreach (var questData in activeQuest)
-                {
-                    if (questData.Status == QuestStatus.InProgress)
-                    {
-                        if (!progressQuestData.Contains(questData))
-                        {
-                            progressQuestData.Add(questData);
-                            QuestListSlot newSlot = Instantiate(slotPrefabs, slotRoot);
-                            newSlot.SetQuestInfo(questData);
-                        }
-                    }
-                    else if (questData.Status == QuestStatus.Completed)
-                    {
-                        completedQuestData.Add(questData);
-                    }
-                }
-            }
+            progressQuestData.Add(_data);
+            QuestListSlot newSlot = Instantiate(slotPrefabs, slotRoot);
+            newSlot.SetQuestInfo(_data);
+        }
+        else if(_data.Status == QuestStatus.Completed)
+        {
+            completedQuestData.Add(_data);
         }
     }
-
+    public void AbandonQuest(SaveQuestData _data)
+    {
+        SaveQuestData targetQuest = progressQuestData.Find(x => x.QuestID == _data.QuestID);
+        if(targetQuest != null)
+        {
+            progressQuestData.Remove(targetQuest);
+            progressQuestSlots.RemoveAll(x => x.Data.QuestID == _data.QuestID);
+        }
+    }
     public void SelectedQuest(QuestListSlot _selected)
     {
         if (SelectedQuestSlot != null && SelectedQuestSlot != _selected)
@@ -92,23 +88,14 @@ public class UIQuest : UIPanel
             UIHelper.UpdateQuestConditions(questInfo_QuestDetailConditions, data.Conditions, _showSlot.Data.Conditions, data,false, questInfo_QuestDescript);
         }
     }
-    public void UpdateQuestUI()
-    {
-
-    }
     public override void OnClickOpenButton()
     {
         base.OnClickOpenButton();
-        CreateQuestSlot();
         ShowQuestDetailInfo(SelectedQuestSlot);
-        QuestManager.Instance.OnQuestCountChanged += UpdateQuestUI;
-
-
     }
     public override void OnClickCloseButton()
     {
         base.OnClickCloseButton();
-        QuestManager.Instance.OnQuestCountChanged -= UpdateQuestUI;
 
     }
 }

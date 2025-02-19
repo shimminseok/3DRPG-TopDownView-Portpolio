@@ -18,7 +18,6 @@ public class UIShop : UIPanel
     public static UIShop Instance;
     public List<ShopItemSlot> itemForSale = new List<ShopItemSlot>();
     public List<InventorySlot> itemInCart = new List<InventorySlot>();
-    public ShopItemSlot selectedItem;
     public NPCData curShopNPC;
     public List<Toggle> shopTabToggles = new List<Toggle>();
 
@@ -28,13 +27,20 @@ public class UIShop : UIPanel
 
     //판매 아이템
     List<ShopItemSlot> itemToSell = new List<ShopItemSlot>();
+    ShopItemSlot selectedItem;
     
 
     bool isBuying = true;
-
     Toggle currentTg;
-    void Awake()
+
+    public ShopItemSlot SelectedItem
     {
+        get { return selectedItem; }
+        set { selectedItem = value; }
+    }
+    protected override void Awake()
+    {
+        base.Awake();
         if (Instance == null)
         {
             Instance = this;
@@ -55,14 +61,16 @@ public class UIShop : UIPanel
             if (i < _data.SaleItemIDs.Count)
             {
                 ItemData item = itemTb.GetItemDataByID(_data.SaleItemIDs[i]);
-                SaveItemData itemData = new SaveItemData();
-                itemData.ItemID = item.ItemID;
-                itemForSale[i].SetBuyItemData(itemData);
+                itemForSale[i].SetBuyItemData(item);
             }
             else
             {
                 itemForSale[i].EmptySlot();
             }
+        }
+        for(int i = 0; i <itemInCart.Count; i++)
+        {
+            itemInCart[i].Empty();
         }
         OnClickOpenButton();
     }
@@ -84,14 +92,15 @@ public class UIShop : UIPanel
     /// </summary>
     /// <param name="_data"></param>
     /// <param name="_qty"></param>
-    public void AddBuyListItem(SaveItemData _data, int _qty = 1)
+    public void AddBuyListItem(ItemData _data, int _qty = 1)
     {
+        if (buyItemSlots.Count == itemInCart.Count)
+            return;
         var item = itemInCart.Find(x => !x.IsEmpty && x.SaveItemData.ItemID == _data.ItemID);
         if (item == null)
         {
             item = itemInCart.Find(x => x.IsEmpty); 
-            item.SetItemInfo(_data.DeepCopy());
-            itemInCart.Add(item);
+            item.SetItemInfo(_data);
             buyItemSlots.Add(item);
         }
         item.AddQuantity(_qty);
@@ -102,7 +111,6 @@ public class UIShop : UIPanel
         foreach (var item in buyItemSlots)
         {
             InventoryManager.Instance.AddItem(item.SaveItemData);
-            //UIInventory.Instance.AddItem(item.SaveItemData);
         }
         ClearCart();
     }

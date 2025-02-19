@@ -30,6 +30,7 @@ public class AttackAreaCollider : MonoBehaviour
         else
         {
             rangeData = GetComponentInParent<MonsterController>().monsterData.AttackRangeData;
+
             Debug.Log("Set RangeData");
         }
     }

@@ -13,6 +13,7 @@ public class PlayerAniEventListener : AniEventListener
     {
         base.Awake();
         controller = GetComponent<PlayerController>();
+
     }
     void Start()
     {
@@ -33,6 +34,12 @@ public class PlayerAniEventListener : AniEventListener
     {
         controller.ChangeCharacterState(CharacterState.Idle);
     }
-    void EnableAttackCollider() => attackAreaCollider?.AttackStart();
-    void DisableAttackCollider() => attackAreaCollider?.AttackEnd();
+    void EnableAttackCollider()
+    {
+        attackAreaCollider?.AttackStart();
+    }
+    void DisableAttackCollider()
+    {
+        attackAreaCollider?.AttackEnd();
+    }
 }

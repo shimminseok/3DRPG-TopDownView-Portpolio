@@ -17,7 +17,7 @@ public class EnhanceNPC : MonoBehaviour, INPCFunction
 
     public void Execute()
     {
-        Debug.Log("강화 실행");
+        UIManager.Instance.CheckOpenPopup(UIEnhancement.Instance);
     }
 
     public void Initialize(NPCData _data)

@@ -13,7 +13,7 @@ public class NPCController : CharacterControllerBase, IInteractable, IDisplayabl
     public int NPC_ID;
     public NPCType npcType;
     public MultiFunctionNPC npcFunction;
-
+    public Transform dialogueCamTrans;
 
     NPCTable npcTable;
     NPCData npcData;
@@ -27,6 +27,9 @@ public class NPCController : CharacterControllerBase, IInteractable, IDisplayabl
     protected override void Awake()
     {
         base.Awake();
+    }
+    void Start()
+    {
         Init();
     }
     protected override void Init()
@@ -78,7 +81,7 @@ public class NPCController : CharacterControllerBase, IInteractable, IDisplayabl
         Debug.Log($"플레이어와 상호작용 헀음");
         UIDescription.Instance.StartDefaultDialogue(this);
         transform.LookAt(PlayerController.Instance.transform);
-        PlayerController.Instance.StopMovement(transform.position);
+        //만약 대화 퀘스트가 있다면 완료 처리
     }
     void StopNPC()
     {

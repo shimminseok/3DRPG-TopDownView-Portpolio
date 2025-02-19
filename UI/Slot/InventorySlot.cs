@@ -30,6 +30,22 @@ public class InventorySlot : SlotBase, IPointerClickHandler, IDropHandler, IBegi
         DeSelectedSlot();
         data.ItemStats.Initialize();
     }
+    public void SetItemInfo(ItemData _data, int _qty = 1)
+    {
+        if (_data == null)
+        {
+            Empty();
+            return;
+        }
+        data = _data;
+        saveItemData = new SaveItemData();
+        saveItemData.ItemID = _data.ItemID;
+        SetItemImage(_data.ItemImg);
+        SetItemGradeImg(_data.ItemGrade);
+        itemCountTxt.text = _qty <= 1 ? string.Empty : saveItemData.Quantity.ToString("N0");
+        DeSelectedSlot();
+        data.ItemStats.Initialize();
+    }
     public void UpdateItemInfo()
     {
         itemCountTxt.text = saveItemData.Quantity <= 1 ? string.Empty : saveItemData.Quantity.ToString();
@@ -50,11 +66,12 @@ public class InventorySlot : SlotBase, IPointerClickHandler, IDropHandler, IBegi
         UpdateItemInfo();
     }
     
-    void Empty()
+    public void Empty()
     {
         saveItemData = null;
         data = null;
         SetItemImage(null);
+        SetItemGradeImg(1);
         itemCountTxt.text = string.Empty;
     }
     public void OnClickSlot()
@@ -63,15 +80,13 @@ public class InventorySlot : SlotBase, IPointerClickHandler, IDropHandler, IBegi
     }
     public override void SelectedSlot()
     {
-        selectedImg.enabled = true;
+        base.SelectedSlot();
         //TO Do
-        //캐릭터Info라면 다르게 작동해야함
         UIInventory.Instance.SelecteItem(this);
     }
     public override void DeSelectedSlot()
     {
-        selectedImg.enabled = false;
-        Debug.Log($"{data?.Name}이 비활성화 되었습니다");
+        base.DeSelectedSlot();
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -108,6 +123,7 @@ public class InventorySlot : SlotBase, IPointerClickHandler, IDropHandler, IBegi
     void SwichInvenSlot(InventorySlot _swich)
     {
         InventoryManager.Instance.SwichItem(_swich.Index, Index);
+        //등록된 HUDITem을 변경
     }
     public void OnDrop(PointerEventData eventData)
     {

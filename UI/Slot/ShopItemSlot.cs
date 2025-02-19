@@ -11,21 +11,19 @@ public class ShopItemSlot : SlotBase
     [SerializeField] TextMeshProUGUI itemPrice;
 
 
-    SaveItemData data;
-    public SaveItemData Data => data;
+    ItemData itemData;
     void Start()
     {
         DeSelectedSlot();
     }
-    public void SetBuyItemData(SaveItemData _buyItem)
+    public void SetBuyItemData(ItemData _buyItem)
     {
-        ItemData data = _buyItem.ItemData;
-        SetItemImage(data.ItemImg);
-        SetItemGradeImg(data.ItemGrade);
-        ShowItemPrice(data.Price);
-        itemName.text = data.Name;
+        itemData = _buyItem;
+        SetItemImage(_buyItem.ItemImg);
+        SetItemGradeImg(_buyItem.ItemGrade);
+        ShowItemPrice(_buyItem.Price);
+        itemName.text = _buyItem.Name;
 
-        this.data = _buyItem;
     }
     public void SetSaleItemData(ItemData _saleItem, int _qty)
     {
@@ -48,19 +46,19 @@ public class ShopItemSlot : SlotBase
     }
     public override void DeSelectedSlot()
     {
-        selectedImg.enabled = false;
+        base.DeSelectedSlot();
     }
 
     public override void SelectedSlot()
     {
-        if (data == null)
+        if (itemData == null)
             return;
-        if (UIShop.Instance.selectedItem != this)
+        base.SelectedSlot();
+        if (UIShop.Instance.SelectedItem != this)
         {
-            UIShop.Instance.selectedItem?.DeSelectedSlot();
-            UIShop.Instance.selectedItem = this;
+            UIShop.Instance.SelectedItem?.DeSelectedSlot();
+            UIShop.Instance.SelectedItem = this;
         }
-        UIShop.Instance.AddBuyListItem(data, 1);
-        selectedImg.enabled = true;
+        UIShop.Instance.AddBuyListItem(itemData, 1);
     }
 }

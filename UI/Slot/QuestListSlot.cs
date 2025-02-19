@@ -13,9 +13,11 @@ public class QuestListSlot : MonoBehaviour
     [SerializeField] TextMeshProUGUI questTypeTxt;
     [SerializeField] TextMeshProUGUI questName;
     [SerializeField] Image selectedImg;
-
+    [SerializeField] GameObject showHUDQuestCheckMark;
+    
     SaveQuestData data;
 
+    bool isShowHUDQuest = false;
     public SaveQuestData Data => data;
     public void SetQuestInfo(SaveQuestData _data)
     {
@@ -32,8 +34,6 @@ public class QuestListSlot : MonoBehaviour
     {
         if (data == null)
             return;
-
-
     }
 
     public void SelectedSlot()
@@ -44,5 +44,22 @@ public class QuestListSlot : MonoBehaviour
     public void DeSelectedSlot()
     {
         selectedImg.enabled = false;
+    }
+
+    public void OnShowHUDQuestSlot()
+    {
+        if(isShowHUDQuest)
+        {
+            UIHUD.Instance.HideHUDQuestSlot(data);
+            isShowHUDQuest = false;
+        }
+        else
+        {
+            UIHUD.Instance.ShowHUDQusetSlot(data);
+            isShowHUDQuest = true;
+        }
+
+        showHUDQuestCheckMark.SetActive(isShowHUDQuest);
+
     }
 }

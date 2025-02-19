@@ -31,6 +31,7 @@ public class EquipItemSlot : SlotBase, IPointerClickHandler, IBeginDragHandler,I
     {
         equipItem = null;
         SetItemImage(null);
+        SetItemGradeImg();
         itemEnhanceCnt.text = string.Empty;
     }
 

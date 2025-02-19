@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Experimental.AI;
 
 public class ObjectPoolManager : MonoBehaviour
 {
@@ -12,15 +13,17 @@ public class ObjectPoolManager : MonoBehaviour
     Dictionary<string, GameObject> registeredObj = new Dictionary<string, GameObject>();
 
     Dictionary<string,Transform> parentCache = new Dictionary<string, Transform>();
+
+    Transform poolGroup;
     void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
         }
         else
             Destroy(gameObject);
+
     }
     /// <summary>
     /// 오브젝트 풀 초기화
@@ -99,6 +102,11 @@ public class ObjectPoolManager : MonoBehaviour
     {
         StartCoroutine(DelayedReturnObject(_obj, _returnTime));
     }
-
+    public void RemovePool(string _name)
+    {
+        parentCache.Remove(_name);
+        poolObjects.Remove(_name);
+        registeredObj.Remove(_name);
+    }
 
 }

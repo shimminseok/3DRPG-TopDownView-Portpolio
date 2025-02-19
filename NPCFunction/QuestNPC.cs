@@ -13,11 +13,6 @@ public class QuestNPC : MonoBehaviour, INPCFunction
     List<QuestData> cachedQuests;
     List<QuestData> npcQuestList;
 
-
-    List<QuestData> availQuests;
-
-
-
     void Awake()
     {
         npcController = GetComponent<NPCController>();
@@ -27,17 +22,6 @@ public class QuestNPC : MonoBehaviour, INPCFunction
             return;
         }
         npcData = npcController.NPCData;
-    }
-    void Start()
-    {
-
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
     }
     /// <summary>
     /// 퀘스트를 주는 함수
@@ -77,6 +61,9 @@ public class QuestNPC : MonoBehaviour, INPCFunction
             if (PlayerController.Instance.characterStat.Level.FinalValue < quest.LevelRequirement)
                 continue;
 
+            if (QuestManager.Instance.finishedQuestData.Contains(quest.ID))
+                continue;
+
             bool prerequisitesCompleted = true;
             foreach(var prevQuestID in quest.PrerequisiteQuest)
             {
@@ -88,10 +75,10 @@ public class QuestNPC : MonoBehaviour, INPCFunction
             }
 
             if(prerequisitesCompleted)
+            {
                 availQuestList.Add(quest);
+            }
         }
-
-
         return availQuestList;
     }
 }

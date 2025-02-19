@@ -6,7 +6,7 @@ public class MonsterAnimator : CharacterAnimator
 {
     void Start()
     {
-       
+
     }
 
     void Update()

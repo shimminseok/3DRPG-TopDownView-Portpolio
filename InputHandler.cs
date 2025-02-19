@@ -104,7 +104,7 @@ public class InputHandler : MonoBehaviour
             if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity,LayerMask.GetMask("Ground")))
             {
                 Vector3 targetPos = hit.point;
-                Vector3 dir = targetPos - transform.position;
+                Vector3 dir = targetPos - PlayerController.Instance.transform.position;
                 dir.y = 0;
                 OnAttack?.Invoke(dir);
 
@@ -154,6 +154,8 @@ public class InputHandler : MonoBehaviour
                 OnSkill?.Invoke(hudSkillSlotMapping[key].assigendSkill);
             }
         }
+
+
     }
     void HandleMouseHover()
     {

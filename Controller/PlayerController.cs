@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.EventSystems;
 using UnityEngine.PlayerLoop;
+using static UnityEngine.UI.CanvasScaler;
 
 public enum CharacterState
 {
@@ -52,10 +53,8 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
 
     [Header("Stat")]
     public PlayerStat characterStat = new PlayerStat();
-
-    //임시
-    public GameObject target;
     public int jobID;
+
     bool isInteractable;
     IInteractable interactableTarget;
 
@@ -63,12 +62,16 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
     bool isDragging;
     public JobData jobData;
 
-    public Action<int, int> OnHealthChanged;
-    public Action<int, int> OnMPChanged;
 
     public Transform Transform => transform;
     public SkillManager SkillManager => skillManager;
     public BuffManager BuffManager => buffManager;
+
+    public float FinalDam => characterStat.Attack.FinalValue;
+
+    public event Action<int, int> OnHealthChanged;
+    public event Action<int, int> OnMPChanged;
+    public event Action OnPlayerDeath;
     protected override void Awake()
     {
         base.Awake();
@@ -120,7 +123,7 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
     protected override void Init()
     {
         base.Init();
-        transform.localPosition = GameManager.Instance.RespawnPoint.localPosition;
+        agent.Warp(GameManager.Instance.RespawnPoint.localPosition);
     }
     void SetJobData()
     {
@@ -156,7 +159,7 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
     {
         if (currentState == CharacterState.Move && _changeState != CharacterState.Move)
         {
-            StopMovement(transform.position);
+            StopMovement();
         }
         currentState = _changeState;
         playerAnimator.ChangeCharacterState(currentState);
@@ -166,18 +169,14 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
 
     void HandleMove(Vector3 _des)
     {
+        if (currentState == CharacterState.Dead)
+            return;
         playerAnimator.ResetTrigger("Attack");
         if (currentState == CharacterState.Attack || currentState == CharacterState.Skill)
             return;
 
-        if ((_des == Vector3.zero))
-        {
-            StopMovement(transform.position);
-        }
-        else
-        {
-            Move(_des);
-        }
+
+        Move(_des);
     }
 
     public void Move(Vector3 _moveDir)
@@ -186,7 +185,7 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
         agent.isStopped = false;
         agent.SetDestination(_moveDir);
     }
-    public void StopMovement(Vector3 _position)
+    public void StopMovement()
     {
         agent.isStopped = true;
         agent.ResetPath();
@@ -201,6 +200,9 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
     /// <param name="_dir">클릭한 방향</param>
     void HandleAttack(Vector3 _dir)
     {
+        if (currentState == CharacterState.Dead)
+            return;
+
         ChangeCharacterState(CharacterState.Attack);
         Quaternion targetRot = Quaternion.LookRotation(_dir);
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * agent.angularSpeed);
@@ -210,12 +212,13 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
     public void Attack(IDamageable _target)
     {
         _target.TakeDamage(Mathf.RoundToInt(characterStat.Attack.FinalValue), this);
+        CameraController.Instance.ShakeCamera(0.2f);
     }
     #endregion
     #region Skill
     void HandleSkill(SaveSkillData _data)
     {
-        if (currentState == CharacterState.Skill || currentState == CharacterState.Attack)
+        if (currentState == CharacterState.Skill || currentState == CharacterState.Attack || currentState == CharacterState.Dead)
         {
             return;
         }
@@ -223,10 +226,6 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
     }
     public void UseSkill(SaveSkillData _data)
     {
-        //범위 내의 타겟을 검사
-        //List<GameObject> targets = new List<GameObject>();
-
-        //스킬 범위 가져오기
         if (_data == null)
         {
             Debug.Log($"존재 하지 않는 스킬 {_data}");
@@ -246,19 +245,13 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
         skillManager.ExecuteSkill(_data, gameObject);
         characterStat.CurrentMP.ModifyAllValue(_data.GetSkillData().RequiredMP, characterStat.MP.FinalValue);
     }
-    public bool CanUseSkill(int _skillID)
-    {
-        bool result = false;
-        //마나 및 쿨타임
-
-        return result;
-    }
     #endregion
     public void HandleInterect()
     {
         if (interactableTarget != null && !UIDescription.Instance.isDialogueRunning)
         {
             interactableTarget.OnInteract();
+            StopMovement();
         }
     }
     #region Dodge
@@ -307,9 +300,12 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
     #endregion
     public void TakeDamage(int _damage, IAttacker _attacker = null)
     {
+        if (currentState == CharacterState.Dead)
+            return;
+
         _damage = CalculateDamage(_damage);
         Debug.Log($"플레이어가 {_attacker}에게 공격당했습니다 : -{_damage}");
-        characterStat.CurrentHP.ModifyAllValue(_damage, characterStat.Health.FinalValue);
+        characterStat.CurrentHP.ModifyAllValue(_damage);
 
         if (characterStat.CurrentHP.FinalValue <= 0)
         {
@@ -344,8 +340,24 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
     public void Die()
     {
         ChangeCharacterState(CharacterState.Dead);
-        characterController.enabled = false;
+        InputHandler.Instance.OnMove -= HandleMove;
+        InputHandler.Instance.OnAttack -= HandleAttack;
+        InputHandler.Instance.OnSkill -= HandleSkill;
+        OnPlayerDeath?.Invoke();
+        agent.ResetPath();
         characterStat.ResetModify();
+
+        StartCoroutine(Revive());
+    }
+    private IEnumerator Revive()
+    {
+        yield return new WaitUntil(() => Input.GetKey(KeyCode.Escape));
+        InputHandler.Instance.OnMove += HandleMove;
+        InputHandler.Instance.OnAttack += HandleAttack;
+        InputHandler.Instance.OnSkill += HandleSkill;
+        Init();
+        playerAnimator.animator.Play("Combat_2H_Ready");
+        characterStat.InitializeFromJob(jobData);
     }
     void OnTriggerEnter(Collider other)
     {
@@ -354,6 +366,8 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
         {
             interactableTarget = interactable;
             InputHandler.Instance.OnInteract += HandleInterect;
+            UIHUD.Instance.OnInteractHUDUI();
+
         }
     }
     void OnTriggerExit(Collider other)
@@ -363,6 +377,7 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
         {
             interactableTarget = null;
             InputHandler.Instance.OnInteract -= HandleInterect;
+            UIHUD.Instance.StopStartInteract();
         }
     }
 

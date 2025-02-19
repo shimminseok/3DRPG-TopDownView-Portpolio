@@ -11,7 +11,6 @@ public class BaseStat : MonoBehaviour
     public Stat MoveSpd = new Stat(StatType.MoveSpd);
     public Stat AttackSpd = new Stat(StatType.AttackSpd);
     public Stat CurrentHP = new Stat(StatType.CurrentHP);
-    public Stat CurrentMP = new Stat(StatType.CurrentMP);
     public Stat Level = new Stat(StatType.Level);
 
     public Dictionary<StatType, Stat> Stats = new Dictionary<StatType, Stat>();
@@ -23,7 +22,6 @@ public class BaseStat : MonoBehaviour
         Stats.Add(StatType.MoveSpd, MoveSpd);
         Stats.Add(StatType.AttackSpd, AttackSpd);
         Stats.Add(StatType.CurrentHP, CurrentHP);
-        Stats.Add(StatType.CurrentMP, CurrentMP);
         Stats.Add(StatType.Level, Level);
 
     }
@@ -38,6 +36,11 @@ public class BaseStat : MonoBehaviour
     {
         Stat targetStat = GetStat(_type);
         targetStat.ModifyBuffValue(-_flat, -_percent);
+    }
+    public void RecoverHP(int _value)
+    {
+        //체력 회복이 MaxHP의 FinalValue를 넘지않게 하기위해
+        CurrentHP.ModifyBaseValue(_value, 0, Health.FinalValue);
     }
     public virtual Stat GetStat(StatType _type)
     {

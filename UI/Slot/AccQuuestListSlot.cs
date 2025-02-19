@@ -7,11 +7,13 @@ using Unity.VisualScripting;
 
 public class AccQuuestListSlot : MonoBehaviour
 {
-    
+    public int npcID;
+
     [SerializeField] TextMeshProUGUI questName;
     [SerializeField] Image selectedImg;
 
     QuestData data;
+
     public void SetAccQuestListSlot(QuestData _data)
     {
         data = _data;
@@ -22,5 +24,7 @@ public class AccQuuestListSlot : MonoBehaviour
     {
         selectedImg.enabled = true;
         UIDescription.Instance.OnClickAcceptQuest(data);
+        QuestManager.Instance.OnTargetAchieved(QuestTargetType.NPC, npcID);
+
     }
 }

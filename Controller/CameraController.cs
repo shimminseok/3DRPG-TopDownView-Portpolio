@@ -16,7 +16,9 @@ public class CameraController : MonoBehaviour
 
     [SerializeField] CinemachineBrain brainCam;
     [SerializeField] CinemachineVirtualCamera mainCam;
+    [SerializeField] CinemachineImpulseSource shakeCamera;
     [SerializeField] CinemachineVirtualCamera dialogueCam;
+    [SerializeField] CinemachineTargetGroup dialogueGroup;
 
 
     CinemachineFramingTransposer transposer;
@@ -108,10 +110,16 @@ public class CameraController : MonoBehaviour
         }
     }
 
-    public void ChangeDialogueCamera(bool _isChange)
+    public void ChangeDialogueCamera(Transform _camTras, bool _isChange)
     {
+        dialogueGroup.m_Targets[1].target = _camTras;
         brainCam.m_DefaultBlend.m_Time = _isChange ? 0.25f : 0.5f;
         dialogueCam.Priority = _isChange ? 11 : 0;
     }
 
+
+    public void ShakeCamera(float _intensity =1f)
+    {
+        shakeCamera.GenerateImpulseWithForce(_intensity);
+    }
 }

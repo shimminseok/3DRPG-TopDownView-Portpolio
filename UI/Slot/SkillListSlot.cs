@@ -20,6 +20,7 @@ public class SkillListSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         SkillData tableData = saveSkillData.GetSkillData();
         skillIcon.sprite = SpriteAtlasManager.Instance.GetSprite("Skill", tableData.SkillImage);
         SkillcurrentLevel.text = $"Lv.{saveSkillData.SkillLevel}";
+        skillName.text = tableData.Name;
     }
 
     public  void SelectedSlot()

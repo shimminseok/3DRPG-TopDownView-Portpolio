@@ -33,6 +33,7 @@ public class HUDSkillSlot : MonoBehaviour, IDropHandler
         {
             assigendSkill.HotKey = slotHotKey;
             icon.sprite = assigendSkill.GetSkillData().SkillImage;
+            PlayerController.Instance.SkillManager.AssignSkill(this);
         }
     }
     public void StartCoolTime(float _duration)

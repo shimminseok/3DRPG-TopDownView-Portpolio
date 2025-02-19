@@ -1,6 +1,8 @@
+using Michsky.MUIP;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -20,21 +22,22 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
     public MonsterData monsterData;
 
     Camera mainCam;
-    [SerializeField] float activationDistance = 30f;
+    Vector3 spawnPoint;
+    float checkTimer = 0.2f;
+    bool isChasing = false;
 
 
-    
     IDamageable target;
 
     public Transform Transform => transform;
     public BuffManager BuffManager => buffManager;
 
+    public bool IsChasing => isChasing;
+    public float FinalDam => monsterStat.Attack.FinalValue;
 
-    Transform spawnTrans;
-
-    float checkTimer = 0.2f;
 
     public Action<int, int> OnHealthChanged; //현재 HP와 최대 HP를 전달
+    public Action<MonsterController> OnDeath;
     protected override void Awake()
     {
         base.Awake();
@@ -46,7 +49,6 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
         GetComponents();
         Init();
 
-        monsterStat.CurrentHP.OnStatChanged += UpdateHealth;
     }
     void GetComponents()
     {
@@ -70,24 +72,12 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
         if (checkTimer >= 0.2f)
         {
             checkTimer = 0;
-            if (!IsInView())
-            {
-                objectRenderer.enabled = false;
-                return;
-            }
-            else
-            {
-                objectRenderer.enabled = true;
-            }
+            objectRenderer.enabled = IsInView() || isChasing;
         }
-
-
-
         if (currentState == CharacterState.Stun || currentState == CharacterState.Dead || currentState == CharacterState.Hit)
         {
             return;
         }
-
         HandleState();
     }
     protected override void Init()
@@ -97,7 +87,11 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
         agent.stoppingDistance = monsterData.AttackRangeData.Range;
         bodyCollider.enabled = true;
         ChangeCharacterState(CharacterState.Idle);
-        Debug.Log("Set Monster Data");
+        agent.Warp(transform.position);
+        spawnPoint = transform.position;
+        monsterStat.CurrentHP.OnStatChanged += UpdateHealth;
+        PlayerController.Instance.OnPlayerDeath += HandlePlayerDeath;
+        agent.enabled = true;
     }
     void HandleState()
     {
@@ -112,6 +106,7 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
                 HandleAttack();
                 break;
             case CharacterState.Return:
+                Return(spawnPoint);
                 break;
             case CharacterState.Dead:
                 break;
@@ -123,7 +118,7 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
     {
         if (currentState == CharacterState.Move && _changeState != CharacterState.Move)
         {
-            StopMovement(transform.position);
+            StopMovement();
         }
         currentState = _changeState;
         animator.ChangeCharacterState(currentState);
@@ -131,15 +126,15 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
 
     public void TakeDamage(int _damage, IAttacker _attacker = null)
     {
-        if (currentState == CharacterState.Dead)
+        if (currentState == CharacterState.Dead && _attacker == null)
         {
             return;
         }
         ChangeCharacterState(CharacterState.Hit);
         ApplyDamage(_damage);
+
         StartCoroutine(HandleTargeting(_attacker, 1f));
         Debug.Log($"{gameObject.name}가 {_attacker}에게 공격당했습니다 : -{_damage}");
-
     }
     IEnumerator HandleTargeting(IAttacker _attacker, float _stunDuration)
     {
@@ -150,16 +145,23 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
         {
             target = damable;
         }
+        isChasing = true;
         ChangeCharacterState(CharacterState.Move);
     }
     void ApplyDamage(int _dam)
     {
         _dam = CalculateDamage(_dam);
-        monsterStat.CurrentHP.ModifyAllValue(_dam,monsterStat.Health.FinalValue);
+        monsterStat.CurrentHP.ModifyAllValue(_dam);
         if (monsterStat.CurrentHP.FinalValue <= 0)
         {
             Die();
         }
+    }
+    void HandlePlayerDeath()
+    {
+        target = null;
+        agent.ResetPath();
+        ChangeCharacterState(CharacterState.Return);
     }
     public int CalculateDamage(int _dam)
     {
@@ -169,15 +171,26 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
     }
     public void Die()
     {
+        if (currentState == CharacterState.Dead)
+        {
+            return;
+        }
+
         bodyCollider.enabled = false;
         animator.ResetTrigger("Hit");
         animator.ResetTrigger("Attack");
         ChangeCharacterState(CharacterState.Dead);
-        StopMovement(transform.position);
+        StopMovement();
+
+        OnDeath?.Invoke(this);
+
         QuestManager.Instance.OnTargetAchieved(QuestTargetType.Monster, ID);
         ObjectPoolManager.Instance.ReturnObject(gameObject, 3);
+        agent.enabled = false;
         Invoke("Init", 3.2f);
         monsterStat.CurrentHP.OnStatChanged -= UpdateHealth;
+        PlayerController.Instance.OnPlayerDeath -= HandlePlayerDeath;
+        PlayerController.Instance.characterStat.GainExp(50);
     }
     public void Move(Vector3 _moveDir)
     {
@@ -185,14 +198,35 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
         if (currentState == CharacterState.Attack || currentState == CharacterState.Dead)
             return;
 
-        if (agent.remainingDistance <= monsterData.AttackRangeData.Range)
+        agent.SetDestination(_moveDir);
+
+        if (!agent.pathPending && agent.remainingDistance <= monsterData.AttackRangeData.Range)
         {
-            ChangeCharacterState(CharacterState.Attack);
+            if (target != null && Vector3.Distance(transform.position, target.Transform.position) <= monsterData.AttackRangeData.Range)
+            {
+                ChangeCharacterState(CharacterState.Attack);
+                return;
+            }
+            else if (currentState == CharacterState.Return)
+            {
+                isChasing = false;
+                StopMovement();
+                return;
+            }
+        }
+        else if(agent.remainingDistance >= 20f)
+        {
+            ChangeCharacterState(CharacterState.Return);
         }
         animator.PlayMoveAnimation(true);
-        agent.SetDestination(_moveDir);
     }
-    public void StopMovement(Vector3 _position)
+    public void Return(Vector3 _point)
+    {
+        target = null;
+        Move(spawnPoint);
+        monsterStat.RecoverHP(Mathf.RoundToInt(monsterStat.Health.FinalValue * 0.03f));
+    }
+    public void StopMovement()
     {
         agent.isStopped = true;
         agent.ResetPath();
@@ -218,6 +252,7 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
     }
     public void Attack(IDamageable _target)
     {
+
         target = _target;
         _target.TakeDamage(Mathf.RoundToInt(monsterStat.Attack.FinalValue));
         Debug.Log($"Monster AttackDam {monsterStat.Attack.FinalValue}");
@@ -234,12 +269,16 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
 
     public void ShowHUD()
     {
-        UITargetInfoHUD.Instance.ShowHUD(name, Mathf.RoundToInt(monsterStat.CurrentHP.FinalValue), monsterData.Health,10, this);
+        UITargetInfoHUD.Instance.ShowHUD(name, Mathf.RoundToInt(monsterStat.CurrentHP.FinalValue), Mathf.RoundToInt(monsterStat.Health.FinalValue), monsterData.Level, this);
     }
     public void HideHUD()
     {
         UITargetInfoHUD.Instance.HideHUD();
     }
-
+    public void SetDeathEffect(Action<MonsterController> _addEffect)
+    {
+        if (OnDeath == null || !OnDeath.GetInvocationList().Contains(_addEffect))
+            OnDeath += _addEffect;
+    }
 
 }

@@ -12,6 +12,11 @@ public class MonsterStat : BaseStat
 
     public void InitializeFromMonsterData(MonsterData _monsterData)
     {
+
+        foreach(Stat stat in Stats.Values)
+        {
+            stat.ResetModifiers();
+        }
         Health.ModifyBaseValue(_monsterData.Health);
         CurrentHP.ModifyBaseValue(_monsterData.Health);
         Attack.ModifyBaseValue(_monsterData.AttackPower);

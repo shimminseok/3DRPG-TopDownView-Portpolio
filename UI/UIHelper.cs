@@ -6,6 +6,28 @@ using UnityEngine;
 
 public static class UIHelper
 {
+    public static void UpdateQuestCondition(TextMeshProUGUI conditionText, QuestConditionProgress progress, QuestData questData)
+    {
+        MonsterTable monsterTable = TableLoader.Instance.GetTable<MonsterTable>();
+        ItemTable itemTable = TableLoader.Instance.GetTable<ItemTable>();
+        NPCTable npcTable = TableLoader.Instance.GetTable<NPCTable>();
+
+        QuestCondition condition = questData.Conditions[progress.ConditionIndex];
+        string targetName = condition.TargetType switch
+        {
+            QuestTargetType.Monster => monsterTable.GetMonsterDataByID(condition.TargetID).MonsterName,
+            QuestTargetType.Item => itemTable.GetItemDataByID(condition.TargetID).Name,
+            QuestTargetType.NPC => npcTable.GetNPCDataByID(condition.TargetID).Name,
+            //QuestTargetType.Location => monsterTable.GetMonsterDataByID(condition.TargetID).MonsterName,
+            _ => "Unknown"
+        };
+
+        string text = string.Format(condition.QuestConditionTxt, targetName, condition.RequiredCount);
+        conditionText.text = progress != null
+            ? string.Format("{0} ({1}/{2})", text, progress.CurrentCount, condition.RequiredCount)
+            : text;
+
+    }
     public static void UpdateQuestConditions
         (
         List<TextMeshProUGUI> conditionTexts,
@@ -109,4 +131,6 @@ public static class UIHelper
 
         return questType;
     }
+
+
 }

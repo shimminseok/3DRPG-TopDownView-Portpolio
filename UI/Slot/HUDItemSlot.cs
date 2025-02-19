@@ -30,6 +30,7 @@ public class HUDItemSlot : MonoBehaviour, IDropHandler
         icon.enabled = false;
         itemQtyText.text = string.Empty;
         registedInventoryIndex = -1;
+        InventoryManager.Instance.OnInventorySlotUpdate -= UpdateHUDSlot;
     }
     public void SetItemSlot(int _index)
     {
@@ -56,7 +57,6 @@ public class HUDItemSlot : MonoBehaviour, IDropHandler
         {
             SetItemSlot(draggedItem.Index);
             InventoryManager.Instance.OnInventorySlotUpdate += UpdateHUDSlot;
-
         }
     }
     public void UseItem(KeyCode _code)

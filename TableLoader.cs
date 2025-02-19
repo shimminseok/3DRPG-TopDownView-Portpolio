@@ -12,6 +12,7 @@ public class TableLoader : MonoBehaviour
     [SerializeField] MonsterTable MonsterTable;
     [SerializeField] ItemTable ItemTable;
     [SerializeField] JobTable JobTable;
+    [SerializeField] EnhancementTable EnhancementTable;
 
     public static TableLoader Instance;
 
@@ -39,6 +40,7 @@ public class TableLoader : MonoBehaviour
         if (typeof(T) == typeof(MonsterTable)) return MonsterTable as T;
         if(typeof(T) == typeof(ItemTable)) return ItemTable as T;
         if(typeof(T) == typeof(JobTable)) return JobTable as T;
+        if(typeof(T) == typeof(EnhancementTable)) return EnhancementTable as T;
 
         Debug.LogError("테이블이 존재하지 않습니다.");
         return null;

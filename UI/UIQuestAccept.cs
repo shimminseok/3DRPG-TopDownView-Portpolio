@@ -1,6 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Xml.Linq;
 using TMPro;
+using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 
 public class UIQuestAccept : UIPanel
@@ -12,30 +15,66 @@ public class UIQuestAccept : UIPanel
     [SerializeField] List<TextMeshProUGUI> questDetailConditionTxtList;
     [SerializeField] TextMeshProUGUI descript;
     [SerializeField] List<InventorySlot> rewardItems;
+    [SerializeField] List<GameObject> actionBtns;
+
+
+    List<AccQuuestListSlot> registeredQuests = new List<AccQuuestListSlot>();
 
     QuestData selectedQuestData;
+    SaveQuestData selectedSaveData;
     public void ShowQuestAcceptUI(QuestData _questData)
     {
         selectedQuestData = _questData;
         questNameTxt.text = _questData.Name;
         questConditionTxt.text = "";
-        UIHelper.UpdateQuestConditions(questDetailConditionTxtList, _questData.Conditions, null, _questData, true, descript);
+        //만약 _questData가 이미 수락한 퀘스트라면?
+        SaveQuestData acceptSaveData = QuestManager.Instance.GetActiveQuest(_questData.Cartegory, _questData.ID);
 
-        for (int i = 0; i < rewardItems.Count; i++)
+        if (acceptSaveData != null)
         {
-            rewardItems[i].gameObject.SetActive(i < _questData.Rewards.Count);
-            if (i < _questData.Rewards.Count)
+            UIHelper.UpdateQuestConditions(questDetailConditionTxtList, _questData.Conditions, acceptSaveData.Conditions, _questData, true, descript);
+        }
+        else
+        {
+            UIHelper.UpdateQuestConditions(questDetailConditionTxtList, _questData.Conditions, null, _questData, true, descript);
+        }
+        selectedSaveData = acceptSaveData;
+
+
+        int slotIndex = 0;
+        if (_questData.Reward.EXPReward > 0 && slotIndex < rewardItems.Count)
+        {
+            rewardItems[slotIndex].gameObject.SetActive(true);
+            rewardItems[slotIndex].SetItemInfo();
+            slotIndex++;
+        }
+        if (_questData.Reward.GoldReward > 0 && slotIndex < rewardItems.Count)
+        {
+            rewardItems[slotIndex].gameObject.SetActive(true);
+            rewardItems[slotIndex].SetItemInfo();
+            slotIndex++;
+        }
+        for (int i = 0; i < _questData.Reward.ItemRewards.Count; i++)
+        {
+            if (slotIndex < rewardItems.Count)
             {
-                for (int j = 0; j < _questData.Rewards[i].ItemRewards.Count; j++)
-                {
-                    rewardItems[i].SetItemInfo(_questData.Rewards[i].ItemRewards[j]);
-                }
+                rewardItems[slotIndex].gameObject.SetActive(true);
+                rewardItems[slotIndex].SetItemInfo(_questData.Reward.ItemRewards[i]);
+                slotIndex++;
             }
             else
             {
-
+                Debug.LogWarning("보상 슬롯이 부족합니다!");
+                break;
             }
         }
+
+        for (int i = slotIndex; i < rewardItems.Count; i++)
+        {
+            rewardItems[i].gameObject.SetActive(false);
+        }
+
+
         OnClickOpenButton();
     }
     public void OnClickAvailQuest(NPCController _controller)
@@ -51,12 +90,19 @@ public class UIQuestAccept : UIPanel
         //퀘스트 목록을 가져옴
         var questList = questNPC.GetAvailQuestList();
 
+        SaveQuestData questData = QuestManager.Instance.GetCompleteQuestByNPCID(_controller.NPC_ID);
+        if (questData != null && !questList.Exists(x => x.ID != questData.QuestID))
+        {
+            QuestData endNpcQuest = questData.QuestTableData;
+            questList.Add(endNpcQuest);
+        }
         for (int i = 0; i < questList.Count; i++)
         {
             AccQuuestListSlot slot;
             if (i >= accQuestObjRoot.childCount)
             {
                 slot = Instantiate(accQuestListPrefab, accQuestObjRoot);
+                registeredQuests.Add(slot);
             }
             else
             {
@@ -65,17 +111,56 @@ public class UIQuestAccept : UIPanel
                 slot = go.GetComponent<AccQuuestListSlot>();
             }
 
+            slot.npcID = _controller.NPC_ID;
             slot.SetAccQuestListSlot(questList[i]);
         }
     }
+    /// <summary>
+    /// 퀘스트 수락 버튼 이벤트
+    /// </summary>
     public void OnClickAcceptQuestButton()
     {
         QuestManager.Instance.AcceptQuest(selectedQuestData);
         UIManager.Instance.AllClosePanel();
     }
+    /// <summary>
+    /// 퀘스트 완료 버튼 이벤트
+    /// </summary>
+    public void OnClickQuestClearButton()
+    {
+        if (selectedSaveData != null)
+        {
+            if (selectedSaveData.IsCompleted)
+            {
+                QuestManager.Instance.CheckQuestCompletion(selectedSaveData);
+                UIManager.Instance.AllClosePanel();
+            }
+        }
+    }
+    /// <summary>
+    /// 퀘스트 포기 버튼 이벤트
+    /// </summary>
+    public void OnClickAbandonQuestButton()
+    {
+        if (selectedSaveData != null)
+        {
+            if (!selectedSaveData.IsCompleted)
+            {
+                QuestManager.Instance.AbandonQuest(selectedSaveData);
+                UIManager.Instance.AllClosePanel();
+            }
+        }
+    }
+    public void HideAcceptQuestSlot()
+    {
+        registeredQuests.ForEach(x => x.gameObject.SetActive(false));
+    }
     public override void OnClickOpenButton()
     {
         base.OnClickOpenButton();
+        actionBtns[0].SetActive(selectedSaveData == null || selectedSaveData.Status == QuestStatus.NotStarted);
+        actionBtns[1].SetActive(selectedSaveData != null && !selectedSaveData.IsCompleted);
+        actionBtns[2].SetActive(selectedSaveData != null && selectedSaveData.IsCompleted);
     }
     public override void OnClickCloseButton()
     {

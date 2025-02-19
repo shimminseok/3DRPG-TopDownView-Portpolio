@@ -19,7 +19,7 @@ public class SkillManager : MonoBehaviour
 
     Collider[] overlabResults = new Collider[30];
     public event Action<KeyCode, float> OnSkillUsed;
-
+    public event Action<float> OnSkillCasting;
 
 
     public List<SaveSkillData> AvailableSkills => availableSkills;
@@ -51,13 +51,8 @@ public class SkillManager : MonoBehaviour
 
         SkillData skillData = _skillData.GetSkillData();
 
-        PlaySkillAnimation(skillData, _caster);
-        OnSkillUsed?.Invoke(_skillData.HotKey, skillData.CoolTime);
-        HandleSkillEffect(skillData, _caster);
-
         StartCoolTime(_skillData.SkillID, _skillData);
-
-        StartCoroutine(CastingSKill(skillData, _caster));
+        StartCoroutine(CastingSKill(_skillData, _caster));
     }
     void PlaySkillAnimation(SkillData _data, GameObject _caster)
     {
@@ -69,18 +64,26 @@ public class SkillManager : MonoBehaviour
         {
             //임시 (오브젝트 풀에서 가져와야함)
             //스킬을 등록하면 해당 스킬에 맞는 오브젝트를 풀에 등록시키고, 스킬 등록을 해제하면 풀에서 삭제 하는 방식 채용
-            Instantiate(_data.EffectPrefab, _caster.transform.position, Quaternion.identity);
+            GameObject effect = ObjectPoolManager.Instance.GetObject(_data.EffectPrefab.name);
+            ParticleSystem particle = effect.GetComponent<ParticleSystem>();
+            effect.transform.position = _caster.transform.position;
+            effect.transform.rotation = _caster.transform.rotation;
+            particle.Play(true);
+            ObjectPoolManager.Instance.ReturnObject(effect, particle.main.duration);
         }
     }
-    IEnumerator CastingSKill(SkillData _skillData, GameObject _caster)
+    IEnumerator CastingSKill(SaveSkillData _skillData, GameObject _caster)
     {
-        Debug.Log($"스킬 : {_skillData.Name}, 캐스팅 중 (시간 {_skillData.CastingTime})");
+        SkillData skillData = _skillData.GetSkillData();
         isCastingSkill = true;
-        yield return new WaitForSeconds(_skillData.CastingTime);
-
-        foreach (var effect in _skillData.SkillEffects)
+        OnSkillCasting?.Invoke(skillData.CastingTime);
+        yield return new WaitForSeconds(_skillData.GetSkillData().CastingTime);
+        OnSkillUsed?.Invoke(_skillData.HotKey, skillData.CoolTime);
+        HandleSkillEffect(skillData, _caster);
+        PlaySkillAnimation(skillData, _caster);
+        foreach (var effect in skillData.SkillEffects)
         {
-            ApplyEffect(_skillData, effect, _caster);
+            ApplyEffect(skillData, effect, _caster);
         }
 
         isCastingSkill = false;
@@ -125,7 +128,11 @@ public class SkillManager : MonoBehaviour
     {
         if (_target.TryGetComponent<IDamageable>(out var damageable))
         {
-            damageable.TakeDamage(Mathf.RoundToInt(_effect.FlatValue), _caster.GetComponent<IAttacker>());
+            if(_caster.TryGetComponent<IAttacker>(out var attacker))
+            {
+                float finalDam = (attacker.FinalDam + _effect.FlatValue) * _effect.PercentValue;
+                damageable.TakeDamage(Mathf.RoundToInt(finalDam), attacker);
+            }
         }
     }
     void ApplyBuffOrDebuff(SkillEffect _effect, GameObject _target)
@@ -146,8 +153,9 @@ public class SkillManager : MonoBehaviour
     {
         resisteredSkill[_skillData.slotHotKey] = _skillData.assigendSkill;
         resisteredSkill[_skillData.slotHotKey].HotKey = _skillData.slotHotKey;
+        if (_skillData.assigendSkill.GetSkillData().EffectPrefab != null)
+            ObjectPoolManager.Instance.CreatePool(_skillData.assigendSkill.GetSkillData().EffectPrefab, 3);
     }
-
     public void StartCoolTime(int _id, SaveSkillData _data)
     {
         if (!skillCoolTimeDic.ContainsKey(_id))
@@ -209,7 +217,7 @@ public class SkillManager : MonoBehaviour
                 break;
             case SkillRangeType.Circle:
                 hitCnt = Physics.OverlapSphereNonAlloc(transform.position, _data.Radius, overlabResults, _targetLayer);
-                for(int i = 0; i < hitCnt; i++)
+                for (int i = 0; i < hitCnt; i++)
                 {
                     hitColliders.Add(overlabResults[i]);
                 }

@@ -34,6 +34,8 @@ public class DragManager : MonoBehaviour
     }
     public void StartDrag(InventorySlot _slot, Transform _source)
     {
+        if (_slot.SaveItemData == null)
+            return;
         DraggedInventoryItem = _slot;
         SetDragSlot(_slot.SaveItemData.ItemData.ItemImg);
     }

@@ -16,8 +16,9 @@ public class UICharacterInfo : UIPanel
 
 
 
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         if (Instance == null)
         {
             Instance = this;
@@ -25,6 +26,8 @@ public class UICharacterInfo : UIPanel
         }
         else
             Destroy(gameObject);
+
+
     }
     void Start()
     {
@@ -40,6 +43,10 @@ public class UICharacterInfo : UIPanel
         {
             statValueTexts[(int)(_stat.Type - 1)].text = _stat.FinalValue.ToString();
             _stat.IsChangeStat = false;
+        }
+        if(_stat.Type == StatType.Level && _stat.IsChangeStat)
+        {
+            levelText.text = $"Lv.{_stat.FinalValue}";
         }
     }
 

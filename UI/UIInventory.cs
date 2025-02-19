@@ -21,8 +21,11 @@ public class UIInventory : UIPanel
 
     public InventorySlot SelectedItem { get; private set; }
 
-    private void Awake()
+    
+
+    protected override void Awake()
     {
+        base.Awake();
         if (Instance == null)
         {
             Instance = this;
@@ -34,6 +37,8 @@ public class UIInventory : UIPanel
     private void Start()
     {
         InitializeSlots();
+
+        InventoryManager.Instance.OnInventorySlotUpdate += UpdateInventorySlot;
     }
     void InitializeSlots()
     {
@@ -66,15 +71,12 @@ public class UIInventory : UIPanel
     public override void OnClickOpenButton()
     {
         base.OnClickOpenButton();
-        UpdateInventoryUI();
-        InventoryManager.Instance.OnInventorySlotUpdate += UpdateInventorySlot;
     }
     public override void OnClickCloseButton()
     {
         base.OnClickCloseButton();
         SelectedItem?.DeSelectedSlot();
         SelectedItem = null;
-        InventoryManager.Instance.OnInventorySlotUpdate -= UpdateInventorySlot;
     }
 
     public void UpdateInventoryUI()
@@ -82,7 +84,9 @@ public class UIInventory : UIPanel
         for (int i = 0; i < InventoryManager.Instance.GetInventoryItem().Count; i++)
         {
             if (InventoryManager.Instance.GetInventoryItem()[i] == null)
+            {
                 continue;
+            }
 
             InventorySlots[i].SetItemInfo(InventoryManager.Instance.GetInventoryItem()[i]);
 

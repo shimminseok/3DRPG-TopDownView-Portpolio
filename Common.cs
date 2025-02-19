@@ -146,10 +146,11 @@ public enum NPCFunction
 public interface IMoveable
 {
     void Move(Vector3 _movement);
-    void StopMovement(Vector3 _position);
+    void StopMovement();
 }
 public interface IAttacker
 {
+    float FinalDam { get; }
     void Attack(IDamageable _target);
 }
 public interface IDamageable
@@ -162,7 +163,6 @@ public interface IDamageable
 public interface ISkillCaseter
 {
     void UseSkill(SaveSkillData _data);
-    bool CanUseSkill(int _skillID);
 
 }
 public interface ITargetable
@@ -252,7 +252,7 @@ public class QuestData
     public QuestData NextQuest;
 
     [Header("보상")]
-    public List<RewardData> Rewards;
+    public RewardData Reward;
 
     [Header("퀘스트 수행 조건")]
     public float TimeLimit; //시간 제한
@@ -279,10 +279,9 @@ public class QuestCondition
 [Serializable]
 public class RewardData
 {
-    public string RewardID;
     public int EXPReward;
     public int GoldReward;
-    public List<SaveItemData> ItemRewards;
+    public List<SaveItemData> ItemRewards = new List<SaveItemData>();
 }
 [Serializable]
 public class NPCData
@@ -338,6 +337,7 @@ public class MonsterData
     public Avatar MonsterAvatar;
     public bool IsAggressive;
     [Header("BaseStat")]
+    public int Level;
     public int Health;
     public int Defense;
     public int AttackPower;
@@ -414,6 +414,39 @@ public class SkillEffect
     public float PercentValue;
 
     public Sprite BuffOverrideIcon; //커스텀 버프 Icon;
+}
+[Serializable]
+public class MaterialRequirement
+{
+    public int MaterialID;
+    public int Quantity;
+}
+[Serializable]
+public class EnhanceData
+{
+    public int EnhancementStep;
+    public int Grade;
+    public List<MaterialRequirement> Requirements;
+    public int GoldCost;
+    public float SuccessRate;
+
+    Dictionary<int, int> MaterialDic;
+
+    public void InitializeDictionary()
+    {
+        MaterialDic = new Dictionary<int, int>();
+        foreach(var mat in Requirements)
+        {
+            MaterialDic[mat.MaterialID] = mat.Quantity;
+        }
+    }
+    public int GetRequiredMaterialCount(int _matID)
+    {
+        if(MaterialDic.TryGetValue(_matID, out var count))
+            return count;
+
+        return 0;
+    }
 }
 public class Buff : ScriptableObject
 {
@@ -502,6 +535,7 @@ public class Stat
     }
     public void ResetModifiers()
     {
+        BaseValue = 0;
         BuffValue = 0;
         EquipmentValue = 0;
         IsChangeStat = true;
@@ -542,7 +576,7 @@ public class Stat
         OnStatChanged?.Invoke( FinalValue);
         Debug.Log($"{Type} Update {FinalValue}");
     }
-    public void ModifyAllValue(float _value, float _maxValue, float _percent = 0)
+    public void ModifyAllValue(float _value, float _percent = 0)
     {
         float remainingDam = _value;
         if(BuffValue > 0)
@@ -559,7 +593,7 @@ public class Stat
         }
         if(remainingDam > 0)
         {
-            ModifyBaseValue(-remainingDam,0,_maxValue);
+            ModifyBaseValue(-remainingDam,0,FinalValue);
         }
     }
 }
@@ -572,12 +606,12 @@ public class SaveItemData
     public int Quantity = 0;
     public int enhanceLevel = 0;
 
-    ItemData itemData;
+    ItemData itemData = null;
     public ItemData ItemData
     {
         get
         {
-            if(itemData == null)
+            if(itemData == null || itemData.ItemID == 0)
             {
                 itemData = TableLoader.Instance.GetTable<ItemTable>().GetItemDataByID(ItemID);
             }
@@ -635,6 +669,7 @@ public class QuestConditionProgress
 
     public bool IsCompleted;
 
+
     public bool IsConditionCompleted(QuestData _data)
     {
         IsCompleted = CurrentCount >= _data.Conditions[ConditionIndex].RequiredCount;
@@ -653,6 +688,13 @@ public class SaveSkillData
             TableData = TableLoader.Instance.GetTable<SkillTable>().GetSkillDataByID(SkillID);
         return TableData;
     }
+}
+
+[Serializable] public class GameSaveData
+{
+    public int Gold;
+    public List<SaveItemData> Inventory;
+    public List<SaveQuestData> ActiveQuests;
 }
 #endregion[SaveData]
 #endregion[Class]
