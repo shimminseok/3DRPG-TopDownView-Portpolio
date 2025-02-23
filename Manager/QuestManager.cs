@@ -57,9 +57,13 @@ public class QuestManager : MonoBehaviour
             Debug.Log($"퀘스트 수락 {_quest.Name}");
         }
     }
+    /// <summary>
+    /// 퀘스트 포기
+    /// </summary>
+    /// <param name="_quest"></param>
     public void AbandonQuest(SaveQuestData _quest)
     {
-        if(!activeQuests.TryGetValue(_quest.QuestTableData.Cartegory, out var quests))
+        if(activeQuests.TryGetValue(_quest.QuestTableData.Cartegory, out var quests))
         {
             SaveQuestData targetQuest = quests.Find(x => x.QuestID == _quest.QuestID);
             if(targetQuest != null)
@@ -67,8 +71,15 @@ public class QuestManager : MonoBehaviour
                 quests.Remove(targetQuest);
                 OnQuestAbandoned?.Invoke(targetQuest);
             }
+            Debug.Log($"퀘스트 포기 {_quest.QuestTableData.Name}");
+
         }
     }
+    /// <summary>
+    /// 퀘스트의 Count를 증가시키는 함수
+    /// </summary>
+    /// <param name="_target"></param>
+    /// <param name="_targetID"></param>
     public void OnTargetAchieved(QuestTargetType _target, int _targetID)
     {
         foreach (var quests in activeQuests.Values)
@@ -101,12 +112,10 @@ public class QuestManager : MonoBehaviour
     /// </summary>
     public void CheckQuestCompletion(SaveQuestData _quest)
     {
-
         if (_quest.IsCompleted)
         {
             CompletedQuest(_quest);
         }
-
     }
     /// <summary>
     /// 퀘스트 완료 함수

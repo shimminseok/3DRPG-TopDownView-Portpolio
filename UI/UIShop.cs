@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro.EditorUtilities;
 using Unity.Burst;
+using Unity.VisualScripting.ReorderableList;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -28,8 +29,9 @@ public class UIShop : UIPanel
     //판매 아이템
     List<ShopItemSlot> itemToSell = new List<ShopItemSlot>();
     ShopItemSlot selectedItem;
-    
 
+
+    int totalBuyItemPrice = 0;
     bool isBuying = true;
     Toggle currentTg;
 
@@ -44,23 +46,22 @@ public class UIShop : UIPanel
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(transform.root);
+            DontDestroyOnLoad(transform.root.gameObject);
         }
         else
         {
-            Destroy(transform.root);
+            Destroy(gameObject);
         }
     }
 
-    public void OpenShop(NPCData _data)
+    public void OpenShop(List<ItemData> _saleData)
     {
-        curShopNPC = _data;
         ItemTable itemTb = TableLoader.Instance.GetTable<ItemTable>();
         for (int i = 0; i < itemForSale.Count; i++)
         {
-            if (i < _data.SaleItemIDs.Count)
+            if (i < _saleData.Count)
             {
-                ItemData item = itemTb.GetItemDataByID(_data.SaleItemIDs[i]);
+                ItemData item = _saleData[i];
                 itemForSale[i].SetBuyItemData(item);
             }
             else
@@ -68,7 +69,7 @@ public class UIShop : UIPanel
                 itemForSale[i].EmptySlot();
             }
         }
-        for(int i = 0; i <itemInCart.Count; i++)
+        for (int i = 0; i < itemInCart.Count; i++)
         {
             itemInCart[i].Empty();
         }
@@ -96,14 +97,19 @@ public class UIShop : UIPanel
     {
         if (buyItemSlots.Count == itemInCart.Count)
             return;
+
+        if (!AccountManager.Instance.IsEnoughtGold(totalBuyItemPrice + _data.Price))
+            return;
+
         var item = itemInCart.Find(x => !x.IsEmpty && x.SaveItemData.ItemID == _data.ItemID);
         if (item == null)
         {
-            item = itemInCart.Find(x => x.IsEmpty); 
+            item = itemInCart.Find(x => x.IsEmpty);
             item.SetItemInfo(_data);
             buyItemSlots.Add(item);
         }
         item.AddQuantity(_qty);
+        totalBuyItemPrice += _data.Price;
         Debug.Log($"아이템을 구매 리스트에 {_qty}개 추가했습니다.");
     }
     public void OnClickBuyItemBtn()
@@ -112,6 +118,8 @@ public class UIShop : UIPanel
         {
             InventoryManager.Instance.AddItem(item.SaveItemData);
         }
+        AccountManager.Instance.UseGold(totalBuyItemPrice);
+
         ClearCart();
     }
 
@@ -122,6 +130,7 @@ public class UIShop : UIPanel
             item.SetItemInfo();
         }
         buyItemSlots.Clear();
+        totalBuyItemPrice = 0;
     }
     #endregion[구매]
     #region[판매]
@@ -137,7 +146,7 @@ public class UIShop : UIPanel
         }
         if (currentTg != _tg)
         {
-            switch(_tg.name)
+            switch (_tg.name)
             {
                 case "BuyTab":
                     break;

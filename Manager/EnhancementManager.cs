@@ -38,6 +38,8 @@ public class EnhancementManager : MonoBehaviour
             Debug.LogWarning($"강화 데이터가 존재하지 않습니다. {level},{grade}");
 
         //재화 확인
+        if (!AccountManager.Instance.IsEnoughtGold(enhanceData.GoldCost))
+            return;
 
         //재료 확인
         foreach (var mat in enhanceData.Requirements)
@@ -51,11 +53,11 @@ public class EnhancementManager : MonoBehaviour
         foreach (var mat in enhanceData.Requirements)
         {
             SaveItemData itemData = InventoryManager.Instance.GetInventoryItemByItemID(mat.MaterialID);
-            InventoryManager.Instance.UseItem(-1,itemData, mat.Quantity);
+            InventoryManager.Instance.UseItem(-1, itemData, mat.Quantity);
         }
         //강화 확률
         bool isSuccess = UnityEngine.Random.value <= enhanceData.SuccessRate;
-        if(isSuccess)
+        if (isSuccess)
         {
             //강화 성공
             EnhanceSuccess(_targetItem);
@@ -64,6 +66,7 @@ public class EnhancementManager : MonoBehaviour
             Debug.LogWarning("강화 실패");
 
         //UIUpdate
+        AccountManager.Instance.UseGold(enhanceData.GoldCost);
         OnEnhancedItem?.Invoke(_targetItem);
     }
     void EnhanceSuccess(SaveItemData _targetItem)

@@ -65,7 +65,7 @@ public class SkillManager : MonoBehaviour
             //임시 (오브젝트 풀에서 가져와야함)
             //스킬을 등록하면 해당 스킬에 맞는 오브젝트를 풀에 등록시키고, 스킬 등록을 해제하면 풀에서 삭제 하는 방식 채용
             GameObject effect = ObjectPoolManager.Instance.GetObject(_data.EffectPrefab.name);
-            ParticleSystem particle = effect.GetComponent<ParticleSystem>();
+            ParticleSystem particle = effect?.GetComponent<ParticleSystem>();
             effect.transform.position = _caster.transform.position;
             effect.transform.rotation = _caster.transform.rotation;
             particle.Play(true);
@@ -155,6 +155,11 @@ public class SkillManager : MonoBehaviour
         resisteredSkill[_skillData.slotHotKey].HotKey = _skillData.slotHotKey;
         if (_skillData.assigendSkill.GetSkillData().EffectPrefab != null)
             ObjectPoolManager.Instance.CreatePool(_skillData.assigendSkill.GetSkillData().EffectPrefab, 3);
+    }
+    public void UnAssignSkill(HUDSkillSlot _skillData)
+    {
+        resisteredSkill[_skillData.slotHotKey] = null;
+        ObjectPoolManager.Instance.RemovePool(_skillData.assigendSkill.GetSkillData().EffectPrefab.name);
     }
     public void StartCoolTime(int _id, SaveSkillData _data)
     {

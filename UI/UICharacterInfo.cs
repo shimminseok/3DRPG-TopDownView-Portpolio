@@ -14,7 +14,10 @@ public class UICharacterInfo : UIPanel
     [SerializeField] List<EquipItemSlot> equipItemSlots = new List<EquipItemSlot>();
     [SerializeField] List<TextMeshProUGUI> statValueTexts = new List<TextMeshProUGUI>();
 
-
+    [Header("CharacterAvartar")]
+    [SerializeField] Transform avatarRoot;
+    [SerializeField] string avatarPath = "Avatar/";
+    string[] avatarName = new string[2] { "Elf_Warrior_Gn", "HuF_Assassin_Gn" };
 
     protected override void Awake()
     {
@@ -22,7 +25,7 @@ public class UICharacterInfo : UIPanel
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(transform.parent);
+            DontDestroyOnLoad(transform.root.gameObject);
         }
         else
             Destroy(gameObject);
@@ -36,6 +39,10 @@ public class UICharacterInfo : UIPanel
             equipItemSlots[i].EquipItem(EquipmentManager.Instance.GetEquipmentItem((ItemType)i));
         }
         nickName.text = PlayerController.Instance.characterName;
+
+
+        GameObject avatar = Instantiate(Resources.Load<GameObject>($"{avatarPath}{avatarName[PlayerController.Instance.jobID - 1]}"),avatarRoot);
+        
     }
     public void UpdateStatUI(Stat _stat)
     {

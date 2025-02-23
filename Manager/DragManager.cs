@@ -45,8 +45,15 @@ public class DragManager : MonoBehaviour
     }
     public void EndDrag()
     {
-        DraggedSkill = null;
-        DraggedEquipItemData = null;
+        if (DraggedSkill != null)
+            DraggedSkill = null;
+
+        if (DraggedEquipItemData != null)
+            DraggedEquipItemData = null;
+
+        if (DraggedInventoryItem != null)
+            DraggedInventoryItem = null;
+
         dragImage.gameObject.SetActive(false);
         IsDragging = false;
     }

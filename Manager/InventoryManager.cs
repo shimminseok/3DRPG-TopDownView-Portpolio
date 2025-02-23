@@ -17,7 +17,6 @@ public class InventoryManager : MonoBehaviour
 
     List<SaveItemData> inventory = new List<SaveItemData>();
     public event Action<int> OnInventorySlotUpdate;
-    //public event Action<int, SaveItemData> OnHUDItemSlotUpdated;
 
     private void Awake()
     {

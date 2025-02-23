@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -14,12 +15,10 @@ public class GameManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            SceneManager.sceneLoaded += OnSceneLoaded;
         }
         else
             Destroy(gameObject);
-
-
-        SaveLoadManager.ResetAllSaves();
     }
     void Start()
     {
@@ -36,4 +35,16 @@ public class GameManager : MonoBehaviour
 
     }
 
+    void OnSceneLoaded(Scene _scene, LoadSceneMode _mode)
+    {
+        GameObject targetObj = GameObject.Find("StartingPoint");
+        if(targetObj != null)
+        {
+            RespawnPoint = targetObj.transform;
+        }
+    }
+    private void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
 }

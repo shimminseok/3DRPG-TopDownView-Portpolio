@@ -18,6 +18,7 @@ public class EnhanceMaterialSlot : SlotBase
             Empty();
             return;
         }
+        itemImage.enabled = true;
         ItemData targetTbData = TableLoader.Instance.GetTable<ItemTable>().GetItemDataByID(_data.MaterialID);
         SetItemImage(targetTbData.ItemImg);
         SetItemGradeImg(targetTbData.ItemGrade);
@@ -27,6 +28,8 @@ public class EnhanceMaterialSlot : SlotBase
     }
     public void Empty()
     {
+        itemImage.enabled = false;
+        SetItemGradeImg();
         targetItem = null;
         CountTxt.text = string.Empty;
     }

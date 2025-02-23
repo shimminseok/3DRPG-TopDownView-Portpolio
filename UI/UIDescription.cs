@@ -7,7 +7,8 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
-using UnityEngine.UIElements;
+using UnityEngine.UI;
+using static Interpolate;
 public class UIDescription : UIPanel
 {
 
@@ -15,8 +16,9 @@ public class UIDescription : UIPanel
     [SerializeField] TextMeshProUGUI npcName;
     [SerializeField] TextMeshProUGUI decription;
 
-    [SerializeField] GameObject questButtonObj;
-    [SerializeField] GameObject shopButtonObj;
+    [SerializeField] Transform funcBtnRoot;
+    [SerializeField] DescriptionFuncBtn funcBtnPrefabs;
+    List<DescriptionFuncBtn> funcBtnList = new List<DescriptionFuncBtn>();
 
     [Header("Accept Quest")]
     [SerializeField] UIQuestAccept uiQuestAccept;
@@ -41,10 +43,10 @@ public class UIDescription : UIPanel
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(transform.root);
+            DontDestroyOnLoad(transform.root.gameObject);
         }
         else
-            Destroy(transform.root);
+            Destroy(gameObject);
     }
     void Update()
     {
@@ -62,11 +64,13 @@ public class UIDescription : UIPanel
     }
     public void StartDefaultDialogue(NPCController _controller)
     {
+
         UIManager.Instance.AllClosePanel();
         if (currentCoroutine != null)
         {
             StopCoroutine(currentCoroutine);
         }
+        CreateFuncBtn(_controller);
         controller = _controller;
         data = controller.NPCData;
         npcName.text = data.Name;
@@ -90,36 +94,40 @@ public class UIDescription : UIPanel
         onDialogueComplete?.Invoke();
 
     }
-    public void OnClickShopBtn()
+    public void CreateFuncBtn(NPCController _npc)
     {
-        ShopNPC fuction = controller.GetComponent<ShopNPC>();
-        if (fuction != null)
+        int index = 0;
+        foreach (var function in _npc.npcFunction.npcFunction)
         {
-            UIManager.Instance.AllClosePanel();
-            fuction.Execute();
+            if (index >= funcBtnList.Count)
+            {
+                DescriptionFuncBtn btn = Instantiate(funcBtnPrefabs, funcBtnRoot);
+                funcBtnList.Add(btn);
+            }
+            funcBtnList[index].SetFuncButton(function.FuncType);
+            funcBtnList[index].AddFuncAction(ButtonAction);
+            index++;
         }
     }
-    public void OnClickQuestBtn()
+    public void ButtonAction(NPCFunction _func)
     {
-        uiQuestAccept.OnClickAvailQuest(controller);
-    }
-    public void OnClickEnhanceBtn()
-    {
-        EnhanceNPC fuction = controller.GetComponent<EnhanceNPC>();
-        if(fuction != null)
+        if (controller.npcFunction.CheckFunction(_func))
         {
-            UIManager.Instance.AllClosePanel();
-            fuction.Execute();
+            controller.npcFunction.Interact(_func);
         }
+    }
+    public void OpenQuestAcceptUI(NPCController _npc)
+    {
+        uiQuestAccept.OnClickAvailQuest(_npc);
     }
     public void OnClickAcceptQuest(QuestData _data)
     {
         SaveQuestData acceptSaveData = QuestManager.Instance.GetActiveQuest(_data.Cartegory, _data.ID);
-        if(acceptSaveData == null)
+        if (acceptSaveData == null)
             StartCoroutine(StartDialogue(_data.PreQuestDialogues, () => uiQuestAccept.ShowQuestAcceptUI(_data)));
         else
         {
-            if(acceptSaveData.IsCompleted)
+            if (acceptSaveData.IsCompleted)
             {
                 StartCoroutine(StartDialogue(_data.PostQuestDialogues, () => uiQuestAccept.ShowQuestAcceptUI(_data)));
             }
@@ -135,11 +143,10 @@ public class UIDescription : UIPanel
     public override void OnClickCloseButton()
     {
         base.OnClickCloseButton();
-        CameraController.Instance.ChangeDialogueCamera(controller.dialogueCamTrans,false);
+        CameraController.Instance.ChangeDialogueCamera(controller.dialogueCamTrans, false);
         ResetDescription();
         isDialogueRunning = false;
         UIHUD.Instance.gameObject.SetActive(true);
         uiQuestAccept.HideAcceptQuestSlot();
-
     }
 }

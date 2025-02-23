@@ -63,6 +63,7 @@ public class NPCController : CharacterControllerBase, IInteractable, IDisplayabl
             if (component is INPCFunction npcComponent)
             {
                 npcComponent.Initialize(npcData);
+                npcFunction.AddFunction(npcComponent);
             }
         }
     }

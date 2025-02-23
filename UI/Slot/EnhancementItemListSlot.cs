@@ -13,9 +13,9 @@ public class EnhancementItemListSlot : SlotBase
     public SaveItemData TargetItemData => targetItemData;
     public void SetEnhanceListSlot(SaveItemData _target)
     {
-       
-        targetItemData = _target;
-        targetItemEnhanceCnt.text = _target.enhanceLevel.ToString();
+        DeSelectedSlot();
+        UpdateEnhancementCount(_target);
+        targetItemName.text = _target.ItemData.Name;
         SetItemImage(_target.ItemData.ItemImg);
         SetItemGradeImg(_target.ItemData.ItemGrade);
 
@@ -39,8 +39,8 @@ public class EnhancementItemListSlot : SlotBase
     public void UpdateEnhancementCount(SaveItemData _itemData)
     {
         targetItemData = _itemData;
-        targetItemEnhanceCnt.text = $"{targetItemData.enhanceLevel}단계";
+        targetItemEnhanceCnt.text = _itemData.enhanceLevel == 0 ? "" : $"{_itemData.enhanceLevel}단계";
     }
-    
+
 
 }

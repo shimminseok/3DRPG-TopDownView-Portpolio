@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class EnhanceNPC : MonoBehaviour, INPCFunction
 {
+    public NPCFunction FuncType => NPCFunction.Enhance;
+
     void Start()
     {
         
@@ -17,6 +19,7 @@ public class EnhanceNPC : MonoBehaviour, INPCFunction
 
     public void Execute()
     {
+        UIManager.Instance.AllClosePanel();
         UIManager.Instance.CheckOpenPopup(UIEnhancement.Instance);
     }
 

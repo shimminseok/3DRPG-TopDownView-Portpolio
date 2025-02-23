@@ -214,7 +214,7 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
                 return;
             }
         }
-        else if(agent.remainingDistance >= 20f)
+        else if (agent.remainingDistance >= 20f)
         {
             ChangeCharacterState(CharacterState.Return);
         }
@@ -222,7 +222,11 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
     }
     public void Return(Vector3 _point)
     {
-        target = null;
+        if (currentState != CharacterState.Return)
+        {
+            target = null;
+        }
+
         Move(spawnPoint);
         monsterStat.RecoverHP(Mathf.RoundToInt(monsterStat.Health.FinalValue * 0.03f));
     }
@@ -269,7 +273,7 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
 
     public void ShowHUD()
     {
-        UITargetInfoHUD.Instance.ShowHUD(name, Mathf.RoundToInt(monsterStat.CurrentHP.FinalValue), Mathf.RoundToInt(monsterStat.Health.FinalValue), monsterData.Level, this);
+        UITargetInfoHUD.Instance.ShowHUD(monsterData.MonsterName, Mathf.RoundToInt(monsterStat.CurrentHP.FinalValue), Mathf.RoundToInt(monsterStat.Health.FinalValue), monsterData.Level, this);
     }
     public void HideHUD()
     {

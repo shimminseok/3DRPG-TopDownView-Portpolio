@@ -158,7 +158,8 @@ public class UIHUD : MonoBehaviour
     public void OnInteractHUDUI()
     {
         interactBtn.SetActive(true);
-        blinkCorotine = StartCoroutine(StartInteract());
+        if (gameObject.activeSelf)
+            blinkCorotine = StartCoroutine(StartInteract());
     }
     public void OffInteractHUDUI()
     {

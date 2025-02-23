@@ -37,5 +37,9 @@ public class Cheat : MonoBehaviour
                 InventoryManager.Instance.AddItem(saveItemData);
             }
         }
+        if(Input.GetKeyDown(KeyCode.F5))
+        {
+            AccountManager.Instance.AddGold(1000);
+        }
     }
 }

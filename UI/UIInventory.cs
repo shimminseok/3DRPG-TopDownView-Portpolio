@@ -2,6 +2,7 @@ using Newtonsoft.Json.Bson;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.U2D;
@@ -14,6 +15,8 @@ public class UIInventory : UIPanel
     [SerializeField] InventorySlot SlotPrefab;
     [SerializeField] Transform slotRoot;
 
+
+    [SerializeField] TextMeshProUGUI gold;
     public List<InventorySlot> InventorySlots = new List<InventorySlot>();
     public Dictionary<int, InventorySlot> itemDic = new Dictionary<int, InventorySlot>();
 
@@ -29,16 +32,17 @@ public class UIInventory : UIPanel
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(transform.root);
+            DontDestroyOnLoad(transform.root.gameObject);
         }
         else
-            Destroy(transform.root);
+            Destroy(gameObject);
     }
     private void Start()
     {
         InitializeSlots();
 
         InventoryManager.Instance.OnInventorySlotUpdate += UpdateInventorySlot;
+        AccountManager.Instance.OnChangedGold += UpdateGoldUI;
     }
     void InitializeSlots()
     {
@@ -89,7 +93,6 @@ public class UIInventory : UIPanel
             }
 
             InventorySlots[i].SetItemInfo(InventoryManager.Instance.GetInventoryItem()[i]);
-
         }
     }
     public void UpdateInventorySlot(int _index)
@@ -100,6 +103,11 @@ public class UIInventory : UIPanel
         SaveItemData itemData = InventoryManager.Instance.GetInventoryItem()[_index];
 
         InventorySlots[_index].SetItemInfo(itemData);
+    }
+
+    void UpdateGoldUI(int _gold)
+    {
+        gold.text = _gold.ToString("N0");
     }
 
 }

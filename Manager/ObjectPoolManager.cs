@@ -104,9 +104,11 @@ public class ObjectPoolManager : MonoBehaviour
     }
     public void RemovePool(string _name)
     {
+        Destroy(parentCache[_name].gameObject);
         parentCache.Remove(_name);
         poolObjects.Remove(_name);
         registeredObj.Remove(_name);
+
     }
 
 }

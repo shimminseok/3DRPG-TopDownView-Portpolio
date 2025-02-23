@@ -10,6 +10,7 @@ public class SpriteAtlasManager : MonoBehaviour
     [SerializeField] SpriteAtlas inventory;
     [SerializeField] SpriteAtlas item;
     [SerializeField] SpriteAtlas skill;
+    [SerializeField] SpriteAtlas ui;
 
     Dictionary<string,SpriteAtlas> atlasDic = new Dictionary<string,SpriteAtlas>();
     private void Awake()
@@ -25,10 +26,7 @@ public class SpriteAtlasManager : MonoBehaviour
         RegisterAtlas("Inventory", inventory);
         RegisterAtlas("Item", item);
         RegisterAtlas("Skill", skill);
-
-    }
-    void Start()
-    {
+        RegisterAtlas("UI", ui);
 
     }
     public void RegisterAtlas(string _key, SpriteAtlas _atlas)

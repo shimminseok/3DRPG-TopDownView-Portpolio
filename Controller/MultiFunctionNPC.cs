@@ -1,21 +1,19 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class MultiFunctionNPC : MonoBehaviour
 {
     public List<INPCFunction> npcFunction = new List<INPCFunction>();
 
-    void Awake()
+    public void Interact(NPCFunction _func)
     {
-        npcFunction.AddRange(GetComponents<INPCFunction>());    
+        npcFunction.Find(x => x.FuncType == _func)?.Execute();
     }
-    public void Interact()
+    public bool CheckFunction(NPCFunction _func)
     {
-        foreach(var func in npcFunction)
-        {
-            func.Execute();
-        }
+        return npcFunction.Exists(x => x.FuncType == _func);
     }
     public void AddFunction(INPCFunction _func)
     {
@@ -30,6 +28,10 @@ public class MultiFunctionNPC : MonoBehaviour
         {
             npcFunction.Remove(_func);
         }
+    }
+    public INPCFunction GetFunction(NPCFunction _func)
+    {
+        return npcFunction.Find(x => x.FuncType == _func);
     }
 
 }

@@ -16,6 +16,12 @@ public class Common
 {
 }
 #region[enum]
+[Flags]
+public enum SceneType
+{
+    Title,
+    InGame
+}
 public enum StatType
 {
     None,
@@ -137,8 +143,8 @@ public enum SkillRangeType
 public enum NPCFunction
 {
     None = 0,
-    Shop = 1 << 0,
-    Quest = 1 << 1,
+    Quest = 1 << 0,
+    Shop = 1 << 1,
     Enhance = 1 << 2,
 }
 #endregion[enum]
@@ -182,6 +188,7 @@ public interface IQuestGiver
 }
 public interface INPCFunction
 {
+    NPCFunction FuncType { get; }
     void Initialize(NPCData _data);
     void Execute();
 }
@@ -208,8 +215,8 @@ public class BuffData
 [Serializable]
 public class SkillData
 {
-    public int ID;                  //스킬ID
     public string Name;         //스킬 이름
+    public int ID;                  //스킬ID
     public float CastingTime;   //캐스팅시간
     public float CoolTime;      //스킬 쿨타임
     public int RequiredMP;      //요구 MP
@@ -348,8 +355,8 @@ public class MonsterData
 [Serializable]
 public class ItemData
 {
-    public int ItemID;
     public string Name;
+    public int ItemID;
     public Sprite ItemImg;
     public ItemType ItemType;
     public int ItemGrade;
@@ -424,6 +431,7 @@ public class MaterialRequirement
 [Serializable]
 public class EnhanceData
 {
+    public string Name;
     public int EnhancementStep;
     public int Grade;
     public List<MaterialRequirement> Requirements;

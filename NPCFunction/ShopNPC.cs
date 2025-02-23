@@ -4,43 +4,36 @@ using UnityEngine;
 
 public class ShopNPC : MonoBehaviour, INPCFunction
 {
-    NPCData npcData;
     List<ItemData> saleItems= new List<ItemData>();
-    void Start()
-    {
-        
-    }
-    void Update()
-    {
-        
-    }
+
+    public NPCFunction FuncType => NPCFunction.Shop;
 
     public void Execute()
     {
-        Debug.Log("Open Shop");
+        UIManager.Instance.AllClosePanel();
         OpenShopUI();
     }
     public void Initialize(NPCData _data)
     {
-        npcData = _data;
-        RegisterSaleItem();
+        RegisterSaleItem(_data);
     }
 
     void OpenShopUI()
     {
-        UIShop.Instance.OpenShop(npcData);
+        UIShop.Instance.OpenShop(saleItems);
     }
-    public void RegisterSaleItem()
+    public void RegisterSaleItem(NPCData _data)
     {
-        //ItemTable itemTb = TableLoader.Instance.GetTable<ItemTable>();
-        //foreach(int id in npcData.SaleItemIDs)
-        //{
-        //    ItemData saleItem = itemTb.GetItemDataByID(id);
-        //    if (saleItem != null)
-        //    {
-        //        saleItems.Add(saleItem);
-        //    }
-        //}
-        //Debug.LogWarning("판매 아이템을 등록했습니다");
+        saleItems.Clear();
+        ItemTable itemTb = TableLoader.Instance.GetTable<ItemTable>();
+        foreach (int id in _data.SaleItemIDs)
+        {
+            ItemData saleItem = itemTb.GetItemDataByID(id);
+            if (saleItem != null)
+            {
+                saleItems.Add(saleItem);
+            }
+        }
+        Debug.LogWarning("판매 아이템을 등록했습니다");
     }
 }

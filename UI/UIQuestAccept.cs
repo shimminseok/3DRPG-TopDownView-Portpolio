@@ -8,13 +8,15 @@ using UnityEngine;
 
 public class UIQuestAccept : UIPanel
 {
+    public static UIQuestAccept Instance;
+
     [SerializeField] AccQuuestListSlot accQuestListPrefab;
     [SerializeField] Transform accQuestObjRoot;
     [SerializeField] TextMeshProUGUI questNameTxt;
     [SerializeField] TextMeshProUGUI questConditionTxt;
     [SerializeField] List<TextMeshProUGUI> questDetailConditionTxtList;
     [SerializeField] TextMeshProUGUI descript;
-    [SerializeField] List<InventorySlot> rewardItems;
+    [SerializeField] List<RewardSlot> rewardItems;
     [SerializeField] List<GameObject> actionBtns;
 
 
@@ -22,6 +24,19 @@ public class UIQuestAccept : UIPanel
 
     QuestData selectedQuestData;
     SaveQuestData selectedSaveData;
+
+    protected override void Awake()
+    {
+        base.Awake();
+        if(Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(transform.root.gameObject);
+        }
+        else
+            Destroy(gameObject);
+
+    }
     public void ShowQuestAcceptUI(QuestData _questData)
     {
         selectedQuestData = _questData;
@@ -45,13 +60,13 @@ public class UIQuestAccept : UIPanel
         if (_questData.Reward.EXPReward > 0 && slotIndex < rewardItems.Count)
         {
             rewardItems[slotIndex].gameObject.SetActive(true);
-            rewardItems[slotIndex].SetItemInfo();
+            rewardItems[slotIndex].SetRewardExp(_questData.Reward.EXPReward);
             slotIndex++;
         }
         if (_questData.Reward.GoldReward > 0 && slotIndex < rewardItems.Count)
         {
             rewardItems[slotIndex].gameObject.SetActive(true);
-            rewardItems[slotIndex].SetItemInfo();
+            rewardItems[slotIndex].SetRewardGold(_questData.Reward.GoldReward);
             slotIndex++;
         }
         for (int i = 0; i < _questData.Reward.ItemRewards.Count; i++)
@@ -59,7 +74,7 @@ public class UIQuestAccept : UIPanel
             if (slotIndex < rewardItems.Count)
             {
                 rewardItems[slotIndex].gameObject.SetActive(true);
-                rewardItems[slotIndex].SetItemInfo(_questData.Reward.ItemRewards[i]);
+                rewardItems[slotIndex].SetRewardItem(_questData.Reward.ItemRewards[i]);
                 slotIndex++;
             }
             else
@@ -83,7 +98,8 @@ public class UIQuestAccept : UIPanel
         {
             child.gameObject.SetActive(false);
         }
-        QuestNPC questNPC = _controller.GetComponent<QuestNPC>();
+       
+        QuestNPC questNPC = _controller.npcFunction.GetFunction(NPCFunction.Quest) as QuestNPC;
         if (questNPC == null)
             return;
 

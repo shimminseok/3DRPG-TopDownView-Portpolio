@@ -1,6 +1,8 @@
+using Michsky.MUIP;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,22 +12,28 @@ public class UIEnhancement : UIPanel
 
     [SerializeField] Transform enhanceItemListSlotRoot;
     [SerializeField] EnhancementItemListSlot enhanceItemListSlotPrefab = new EnhancementItemListSlot();
-    EnhancementItemListSlot slelectedEnhanceListSlot;
+    EnhancementItemListSlot selectedEnhanceListSlot;
 
     [Header("TargetItemEnhanceInfo")]
     [SerializeField] Image targetItemImg;
+    [SerializeField] TextMeshProUGUI needGoldText;
+    [SerializeField] TextMeshProUGUI currentGoldText;
     [SerializeField] List<EnhanceMaterialSlot> materialItems = new List<EnhanceMaterialSlot>();
     List<EnhancementItemListSlot> enhancementItemListSlots = new List<EnhancementItemListSlot>();
 
 
+
     SaveItemData targetItem;
     EnhanceData targetEnhanceData;
+
+
+
     protected override void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(transform.root);
+            DontDestroyOnLoad(transform.root.gameObject);
         }
         else
         {
@@ -34,20 +42,22 @@ public class UIEnhancement : UIPanel
     }
     public void SetEnhanceTargetItem(EnhancementItemListSlot _itemData)
     {
-        if(slelectedEnhanceListSlot == null || slelectedEnhanceListSlot  != _itemData)
+        if (selectedEnhanceListSlot == null || selectedEnhanceListSlot != _itemData)
         {
-            slelectedEnhanceListSlot = _itemData;
-            targetItem = slelectedEnhanceListSlot.TargetItemData;
+            selectedEnhanceListSlot?.DeSelectedSlot();
+            selectedEnhanceListSlot = _itemData;
+            targetItem = selectedEnhanceListSlot.TargetItemData;
             targetEnhanceData = TableLoader.Instance.GetTable<EnhancementTable>().GetEnhanceDataByLevelAndGrade(targetItem.enhanceLevel, targetItem.ItemData.ItemGrade);
+            targetItemImg.enabled = true;
             targetItemImg.sprite = targetItem.ItemData.ItemImg;
         }
-
-
+        needGoldText.text = targetEnhanceData.GoldCost.ToString("N0");
         UpdateEnhancementUI(targetItem);
     }
     public void OnClickEnhancement()
     {
         EnhancementManager.Instance.TryEnhance(targetItem);
+
     }
 
     public override void OnClickOpenButton()
@@ -55,6 +65,7 @@ public class UIEnhancement : UIPanel
         base.OnClickOpenButton();
         EnhancementManager.Instance.OnEnhancedItem += UpdateEnhancementUI;
         EnhancementManager.Instance.OnEnhanceSuccess += EnhanceSuccess;
+        AccountManager.Instance.OnChangedGold += UpdateCurrentGoldUI;
         for (int i = 0; i < Enum.GetValues(typeof(ItemType)).Length; i++)
         {
             if (i < (int)ItemType.Potion)
@@ -63,16 +74,20 @@ public class UIEnhancement : UIPanel
                 if (targetItem == null)
                     continue;
 
-                var slot = Instantiate(enhanceItemListSlotPrefab,enhanceItemListSlotRoot);
+                var slot = Instantiate(enhanceItemListSlotPrefab, enhanceItemListSlotRoot);
                 slot.SetEnhanceListSlot(targetItem);
             }
         }
+        UpdateCurrentGoldUI(AccountManager.Instance.Gold);
+        ResetUI();
     }
     public override void OnClickCloseButton()
     {
         base.OnClickCloseButton();
         EnhancementManager.Instance.OnEnhancedItem -= UpdateEnhancementUI;
         EnhancementManager.Instance.OnEnhanceSuccess -= EnhanceSuccess;
+        AccountManager.Instance.OnChangedGold -= UpdateCurrentGoldUI;
+
         for (int i = 0; i < enhanceItemListSlotRoot.childCount; i++)
         {
             Destroy(enhanceItemListSlotRoot.GetChild(i).gameObject);
@@ -94,12 +109,34 @@ public class UIEnhancement : UIPanel
             else
             {
                 materialItems[i].gameObject.SetActive(false);
+                materialItems[i].SetMaterialSlot(null);
             }
         }
+    }
+    void UpdateCurrentGoldUI(int _currentGold)
+    {
+        currentGoldText.color = targetEnhanceData?.GoldCost > _currentGold ? Color.red : Color.white;
+        currentGoldText.text = _currentGold.ToString("N0");
     }
     public void EnhanceSuccess()
     {
         targetEnhanceData = TableLoader.Instance.GetTable<EnhancementTable>().GetEnhanceDataByLevelAndGrade(targetItem.enhanceLevel, targetItem.ItemData.ItemGrade);
-        SetEnhanceTargetItem(slelectedEnhanceListSlot);
+        SetEnhanceTargetItem(selectedEnhanceListSlot);
+    }
+
+    void ResetUI()
+    {
+        for (int i = 0; i < materialItems.Count; i++)
+        {
+            materialItems[i].SetMaterialSlot(null);
+        }
+        selectedEnhanceListSlot = null;
+        if (targetItem != null)
+            targetItem = null;
+        if (targetEnhanceData != null)
+            targetEnhanceData = null;
+
+        targetItemImg.enabled = false;
+        needGoldText.text = 0.ToString();
     }
 }

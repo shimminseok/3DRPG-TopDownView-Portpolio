@@ -8,10 +8,11 @@ using UnityEngine;
 public class QuestNPC : MonoBehaviour, INPCFunction
 {
     NPCController npcController;
-    NPCData npcData;
 
     List<QuestData> cachedQuests;
     List<QuestData> npcQuestList;
+
+    public NPCFunction FuncType => NPCFunction.Quest;
 
     void Awake()
     {
@@ -21,32 +22,26 @@ public class QuestNPC : MonoBehaviour, INPCFunction
             Debug.LogWarning("NPCController X");
             return;
         }
-        npcData = npcController.NPCData;
+
     }
     /// <summary>
     /// 퀘스트를 주는 함수
     /// </summary>
     public void Execute()
     {
-        Debug.Log("Give Quest");
-        for (int i = 0; i < npcQuestList.Count; i++)
-        {
-            SaveQuestData data = new SaveQuestData(npcQuestList[i]);
-            QuestManager.Instance.AcceptQuest(npcQuestList[i]);
-        }
+        UIDescription.Instance.OpenQuestAcceptUI(npcController);
 
     }
     public void Initialize(NPCData _data)
     {
-        npcData = _data;
-        RegisterQuest();
+        RegisterQuest(_data);
     }
-    void RegisterQuest()
+    void RegisterQuest(NPCData _data)
     {
         if (cachedQuests == null)
         {
             QuestTable questTable = TableLoader.Instance.GetTable<QuestTable>();
-            cachedQuests = questTable.GetQuestsByStartNPCID(npcData.NPCID);
+            cachedQuests = questTable.GetQuestsByStartNPCID(_data.NPCID);
         }
         npcQuestList = cachedQuests.Where(q => !QuestManager.Instance.finishedQuestData.Contains(q.ID)).ToList();
         Debug.LogWarning("퀘스트 등록 완료");
@@ -80,5 +75,9 @@ public class QuestNPC : MonoBehaviour, INPCFunction
             }
         }
         return availQuestList;
+    }
+    void UpdateQuestList(int _questID)
+    {
+        npcQuestList = cachedQuests.Where(x => !QuestManager.Instance.finishedQuestData.Contains(x.ID)).ToList();
     }
 }

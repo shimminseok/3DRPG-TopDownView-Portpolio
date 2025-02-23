@@ -4,7 +4,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using UnityEngine.UIElements;
 
 public class UISkill : UIPanel
 {
@@ -12,10 +11,11 @@ public class UISkill : UIPanel
 
     [Header("SkillList")]
     [SerializeField] SkillListSlot slotPrefab;
-    [SerializeField] ScrollView slotScrollView;
+    [SerializeField] UnityEngine.UIElements.ScrollView slotScrollView;
     [SerializeField] Transform slotRoot;
 
     [Header("Skill Info")]
+    [SerializeField] GameObject skillInfoObj;
     [SerializeField] UnityEngine.UI.Image skillIcon;
     [SerializeField] TextMeshProUGUI skillName;
     [SerializeField] TextMeshProUGUI skillLv;
@@ -33,7 +33,7 @@ public class UISkill : UIPanel
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(transform.root);
+            DontDestroyOnLoad(transform.root.gameObject);
         }
         else
         {
@@ -62,6 +62,7 @@ public class UISkill : UIPanel
 
     public void DisplaySkillInfo(SkillListSlot _slot)
     {
+        skillInfoObj.SetActive(true);
         if (currentSkillSlot != _slot)
         {
             currentSkillSlot?.DeSelectedSlot();
@@ -80,6 +81,7 @@ public class UISkill : UIPanel
     {
         base.OnClickOpenButton();
         InstanteSkillListSlot();
+        skillInfoObj.SetActive(false);
     }
     public override void OnClickCloseButton()
     {
