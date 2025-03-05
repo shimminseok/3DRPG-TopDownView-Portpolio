@@ -30,14 +30,14 @@ public class DragManager : MonoBehaviour
     public void StartDrag(SaveItemData _item, Transform _source, bool _isInvenSlot)
     {
         DraggedEquipItemData = _item;
-        SetDragSlot(_item.ItemData.ItemImg);
+        SetDragSlot(SpriteAtlasManager.Instance.GetSprite("Item", _item.GetItemData().ItemImg));
     }
     public void StartDrag(InventorySlot _slot, Transform _source)
     {
         if (_slot.SaveItemData == null)
             return;
         DraggedInventoryItem = _slot;
-        SetDragSlot(_slot.SaveItemData.ItemData.ItemImg);
+        SetDragSlot(SpriteAtlasManager.Instance.GetSprite("Item", _slot.SaveItemData.GetItemData().ItemImg));
     }
     public void UpdateDrag(Vector2 _position)
     {

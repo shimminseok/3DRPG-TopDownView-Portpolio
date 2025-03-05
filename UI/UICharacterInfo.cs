@@ -36,12 +36,13 @@ public class UICharacterInfo : UIPanel
     {
         for (int i = 0; i < equipItemSlots.Count; ++i)
         {
-            equipItemSlots[i].EquipItem(EquipmentManager.Instance.GetEquipmentItem((ItemType)i));
+            SaveItemData equipitem = EquipmentManager.Instance.GetEquipmentItem((ItemType)i);
+            equipItemSlots[i].EquipItem(equipitem);
         }
         nickName.text = PlayerController.Instance.characterName;
 
 
-        GameObject avatar = Instantiate(Resources.Load<GameObject>($"{avatarPath}{avatarName[PlayerController.Instance.jobID - 1]}"),avatarRoot);
+        GameObject avatar = Instantiate(Resources.Load<GameObject>($"{avatarPath}{avatarName[PlayerController.Instance.JobID - 1]}"),avatarRoot);
         
     }
     public void UpdateStatUI(Stat _stat)

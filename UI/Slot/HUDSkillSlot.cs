@@ -28,15 +28,15 @@ public class HUDSkillSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDra
         if (!DragManager.Instance.IsDragging)
             return;
 
-        assigendSkill = DragManager.Instance.DraggedSkill;
 
-        if (assigendSkill != null)
-        {
-            AssingedSkill();
-        }
+        AssingedSkill(DragManager.Instance.DraggedSkill);
     }
-    void AssingedSkill()
+    public void AssingedSkill(SaveSkillData _skillData)
     {
+        assigendSkill = _skillData;
+        if (assigendSkill == null)
+            return;
+
         assigendSkill.HotKey = slotHotKey;
         icon.enabled = true;
         icon.sprite = assigendSkill.GetSkillData().SkillImage;

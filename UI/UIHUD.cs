@@ -3,7 +3,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
-using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -45,12 +44,14 @@ public class UIHUD : MonoBehaviour
 
     [Header("Top")]
     [SerializeField] TextMeshProUGUI areaName;
+
+    public List<HUDItemSlot> HUDItemSlot => hudItemSlots;
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(transform.root);
+            DontDestroyOnLoad(transform.root.gameObject);
         }
         else
         {
@@ -70,9 +71,18 @@ public class UIHUD : MonoBehaviour
         PlayerController.Instance.characterStat.OnGainExp += UpdateExpUI;
         PlayerController.Instance.characterStat.OnLevelUp += UpdateLevelUI;
 
-        for (int i = 0; i < hudItemSlots.Count; i++)
+        int index = 0;
+        foreach (var slot in GameManager.Instance.LoadGameData().ResisteredSkills)
         {
-            hudItemSlots[i].Empty();
+            PlayerController.Instance.SkillManager.ResisteredSkill[slot.Key] = slot.Value;
+            hudSkillSlots[index++].AssingedSkill(slot.Value);
+        }
+
+        index = 0;
+        foreach(var slot in GameManager.Instance.LoadGameData().ResisteredItems)
+        {
+            hudItemSlots[index].slotHotKey = slot.Key;
+            hudItemSlots[index++].SetItemSlot(slot.Value);
         }
     }
     public void UpdateHPUI(int _current, int _max)

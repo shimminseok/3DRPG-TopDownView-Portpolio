@@ -4,89 +4,49 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using UnityEngine;
+using Newtonsoft.Json;
+using System.Threading.Tasks;
 
-
-[Serializable]
-public class Wrapper<T>
-{
-    public List<T> Items;
-
-    public Wrapper(List<T> _items)
-    {
-        Items = _items;
-    }
-    public Wrapper()
-    {
-        Items = new List<T>();
-    }
-}
 
 public class SaveLoadManager
 {
-
-    public static string GetSavePath<T>()
+    public static GameSaveData GameData { get; private set; }
+    public static void SaveData(GameSaveData _data, string _fileName)
     {
-        return $"{Application.persistentDataPath}/{typeof(T).Name}.dat";
-    }
-    //public static void Save(GameSaveData _data)
-    //{
-    //    string json = JsonUtility.ToJson(_data, true);
-    //    byte[] binaryData = System.Text.Encoding.UTF8.GetBytes(json);
-    //    File.WriteAllBytes(savePath, binaryData);
-    //    Debug.LogWarning("데이터 저장 완료");
-    //}
+        JsonSerializerSettings setting = new JsonSerializerSettings
+        {
+            NullValueHandling = NullValueHandling.Ignore,
+            Formatting = Formatting.Indented
+        };
+        string json = JsonConvert.SerializeObject(_data, setting);
+        string filePath = Path.Combine(Application.persistentDataPath, _fileName);
 
-    //public static GameSaveData Load()
-    //{
-    //    if(File.Exists(savePath))
-    //    {
-    //        byte[] binaryData = File.ReadAllBytes(savePath);
-    //        string json = System.Text.Encoding.UTF8.GetString(binaryData);
-    //        return JsonUtility.FromJson<GameSaveData>(json);
-    //    }
-
-    //    return null;
-    //}
-    public static void Save<T>(T _data)
-    {
-        string json = JsonUtility.ToJson(_data, true);
-        byte[] binaryData = System.Text.Encoding.UTF8.GetBytes(json);
-        File.WriteAllBytes(GetSavePath<T>(), binaryData);
+        File.WriteAllText(filePath, json);
         Debug.LogWarning("데이터 저장 완료");
     }
-    public static void SaveList<T>(List<T> _data)
+    public static GameSaveData LoadData(string _fileName)
     {
-        Wrapper<T> wrapper = new Wrapper<T>(_data);
-        Save(wrapper);
-    }
-    public static T Load<T>() where T : new()
-    {
-        string path = GetSavePath<T>();
-        if(File.Exists(path))
+        string filePath = Path.Combine(Application.persistentDataPath,_fileName);
+        if(File.Exists(filePath))
         {
-            byte[] binaryData = File.ReadAllBytes(path);
-            string json = Encoding.UTF8.GetString(binaryData);
-            return JsonUtility.FromJson<T>(json);
+            string json = File.ReadAllText(filePath);
+            GameSaveData data = JsonConvert.DeserializeObject<GameSaveData>(json);
+            Debug.Log("데이터 로드 성공");
+            GameData = data;
+            return data;
         }
-
-        return new T();
-    }
-    public static List<T> LoadList<T>()
-    {
-        Wrapper<T> wrapper = Load<Wrapper<T>>();
-        return wrapper.Items ?? new List<T>();
-    }
-
-    public static void ResetAllSaves()
-    {
-        ResetSave<Wrapper<SaveItemData>>();
-    }
-    public static void ResetSave<T>()
-    {
-        string path = GetSavePath<T>();
-        if(File.Exists(path))
+        else
         {
-            File.Delete(path);
+            Debug.Log("데이터 로드 실패");
+            return null;
         }
     }
+    public static void ResetData(string _fileName)
+    {
+        GameData = new GameSaveData();
+        SaveData(GameData, _fileName);
+    }
+
 }
+
+

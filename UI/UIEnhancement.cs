@@ -1,4 +1,5 @@
 using Michsky.MUIP;
+using Spine.Unity;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -21,6 +22,7 @@ public class UIEnhancement : UIPanel
     [SerializeField] List<EnhanceMaterialSlot> materialItems = new List<EnhanceMaterialSlot>();
     List<EnhancementItemListSlot> enhancementItemListSlots = new List<EnhancementItemListSlot>();
 
+    [SerializeField] SkeletonGraphic enhanceResultEffect;
 
 
     SaveItemData targetItem;
@@ -47,9 +49,9 @@ public class UIEnhancement : UIPanel
             selectedEnhanceListSlot?.DeSelectedSlot();
             selectedEnhanceListSlot = _itemData;
             targetItem = selectedEnhanceListSlot.TargetItemData;
-            targetEnhanceData = TableLoader.Instance.GetTable<EnhancementTable>().GetEnhanceDataByLevelAndGrade(targetItem.enhanceLevel, targetItem.ItemData.ItemGrade);
+            targetEnhanceData = TableLoader.Instance.GetTable<EnhancementTable>().GetEnhanceDataByLevelAndGrade(targetItem.enhanceLevel, targetItem.GetItemData().ItemGrade);
             targetItemImg.enabled = true;
-            targetItemImg.sprite = targetItem.ItemData.ItemImg;
+            targetItemImg.sprite = SpriteAtlasManager.Instance.GetSprite("Item",targetItem.GetItemData().ItemImg);
         }
         needGoldText.text = targetEnhanceData.GoldCost.ToString("N0");
         UpdateEnhancementUI(targetItem);
@@ -65,7 +67,9 @@ public class UIEnhancement : UIPanel
         base.OnClickOpenButton();
         EnhancementManager.Instance.OnEnhancedItem += UpdateEnhancementUI;
         EnhancementManager.Instance.OnEnhanceSuccess += EnhanceSuccess;
+        EnhancementManager.Instance.OnEnhanceFail += EnhanceFailure;
         AccountManager.Instance.OnChangedGold += UpdateCurrentGoldUI;
+
         for (int i = 0; i < Enum.GetValues(typeof(ItemType)).Length; i++)
         {
             if (i < (int)ItemType.Potion)
@@ -86,6 +90,7 @@ public class UIEnhancement : UIPanel
         base.OnClickCloseButton();
         EnhancementManager.Instance.OnEnhancedItem -= UpdateEnhancementUI;
         EnhancementManager.Instance.OnEnhanceSuccess -= EnhanceSuccess;
+        EnhancementManager.Instance.OnEnhanceFail -= EnhanceFailure;
         AccountManager.Instance.OnChangedGold -= UpdateCurrentGoldUI;
 
         for (int i = 0; i < enhanceItemListSlotRoot.childCount; i++)
@@ -118,10 +123,15 @@ public class UIEnhancement : UIPanel
         currentGoldText.color = targetEnhanceData?.GoldCost > _currentGold ? Color.red : Color.white;
         currentGoldText.text = _currentGold.ToString("N0");
     }
-    public void EnhanceSuccess()
+    void EnhanceSuccess()
     {
-        targetEnhanceData = TableLoader.Instance.GetTable<EnhancementTable>().GetEnhanceDataByLevelAndGrade(targetItem.enhanceLevel, targetItem.ItemData.ItemGrade);
+        UIManager.Instance.PlaySkeletonAnimation(enhanceResultEffect,"success");
+        targetEnhanceData = TableLoader.Instance.GetTable<EnhancementTable>().GetEnhanceDataByLevelAndGrade(targetItem.enhanceLevel, targetItem.GetItemData().ItemGrade);
         SetEnhanceTargetItem(selectedEnhanceListSlot);
+    }
+    void EnhanceFailure()
+    {
+        UIManager.Instance.PlaySkeletonAnimation(enhanceResultEffect, "fail");
     }
 
     void ResetUI()

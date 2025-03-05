@@ -1,16 +1,9 @@
-using JetBrains.Annotations;
-using Newtonsoft.Json.Bson;
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using TMPro;
-using Unity.Mathematics;
-using UnityEditor.Animations;
-using UnityEditorInternal;
 using UnityEngine;
-using UnityEngine.Events;
-using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 public class Common
 {
@@ -137,7 +130,8 @@ public enum SkillRangeType
     Rectangle,
     Sector,
     Circle,
-    Point
+    Point,
+    Self
 }
 [Flags]
 public enum NPCFunction
@@ -168,7 +162,7 @@ public interface IDamageable
 }
 public interface ISkillCaseter
 {
-    void UseSkill(SaveSkillData _data);
+    void UseSkill(Vector3 _mousePos, SaveSkillData _data);
 
 }
 public interface ITargetable
@@ -196,6 +190,11 @@ public interface IDisplayable
 {
     void ShowHUD();
     void HideHUD();
+}
+public interface ISelectableSlot : IPointerClickHandler
+{
+    void SelectedSlot();
+    void DeSelectedSlot();
 }
 #endregion[NPC Interface]
 #endregion[Interface]
@@ -311,7 +310,7 @@ public class JobData
 {
     public int JobID;
     public string JobName;
-    public UnityEditor.Animations.AnimatorController Animator;
+    public RuntimeAnimatorController Animator;
     public GameObject JobPrefabs;
     public Avatar JobAvatar;
     [Header("BaseStat")]
@@ -357,7 +356,7 @@ public class ItemData
 {
     public string Name;
     public int ItemID;
-    public Sprite ItemImg;
+    public string ItemImg;
     public ItemType ItemType;
     public int ItemGrade;
     public List<ClassType> UsableClass;
@@ -443,14 +442,14 @@ public class EnhanceData
     public void InitializeDictionary()
     {
         MaterialDic = new Dictionary<int, int>();
-        foreach(var mat in Requirements)
+        foreach (var mat in Requirements)
         {
             MaterialDic[mat.MaterialID] = mat.Quantity;
         }
     }
     public int GetRequiredMaterialCount(int _matID)
     {
-        if(MaterialDic.TryGetValue(_matID, out var count))
+        if (MaterialDic.TryGetValue(_matID, out var count))
             return count;
 
         return 0;
@@ -496,7 +495,7 @@ public class Buff : ScriptableObject
                 statComponent.ApplyBuff(StatType, FlatValue, PercentValue);
                 break;
             case BuffType.StatDeBuff:
-                statComponent.ApplyBuff(StatType, -FlatValue,-PercentValue);
+                statComponent.ApplyBuff(StatType, -FlatValue, -PercentValue);
                 break;
         }
     }
@@ -516,7 +515,7 @@ public class Buff : ScriptableObject
         switch (BuffType)
         {
             case BuffType.StatBuff:
-                statComponent.RemoveBuff(StatType, FlatValue,PercentValue);
+                statComponent.RemoveBuff(StatType, FlatValue, PercentValue);
                 break;
             case BuffType.StatDeBuff:
                 statComponent.RemoveBuff(StatType, -FlatValue, -PercentValue);
@@ -556,7 +555,7 @@ public class Stat
     {
         IsChangeStat = true;
         BaseValue = Mathf.Clamp(BaseValue + _value, _min, _max);
-        OnStatChanged?.Invoke( FinalValue);
+        OnStatChanged?.Invoke(FinalValue);
 
         Debug.Log($"{Type} Update {FinalValue}");
     }
@@ -569,7 +568,7 @@ public class Stat
         IsChangeStat = true;
         BuffValue += _flat;
         PercentValue += _percent;
-        OnStatChanged?.Invoke( FinalValue);
+        OnStatChanged?.Invoke(FinalValue);
         Debug.Log($"{Type} Update {FinalValue}");
 
     }
@@ -581,27 +580,27 @@ public class Stat
     {
         IsChangeStat = true;
         EquipmentValue += _value;
-        OnStatChanged?.Invoke( FinalValue);
+        OnStatChanged?.Invoke(FinalValue);
         Debug.Log($"{Type} Update {FinalValue}");
     }
     public void ModifyAllValue(float _value, float _percent = 0)
     {
         float remainingDam = _value;
-        if(BuffValue > 0)
+        if (BuffValue > 0)
         {
             float damToBuff = MathF.Min(remainingDam, BuffValue);
             ModifyBuffValue(damToBuff, _percent);
             remainingDam -= damToBuff;
         }
-        if(remainingDam > 0)
+        if (remainingDam > 0)
         {
             float damToEquip = Mathf.Min(remainingDam, EquipmentValue);
             ModifyEquipmentValue(damToEquip);
             remainingDam -= damToEquip;
         }
-        if(remainingDam > 0)
+        if (remainingDam > 0)
         {
-            ModifyBaseValue(-remainingDam,0,FinalValue);
+            ModifyBaseValue(-remainingDam, 0, FinalValue);
         }
     }
 }
@@ -614,17 +613,15 @@ public class SaveItemData
     public int Quantity = 0;
     public int enhanceLevel = 0;
 
-    ItemData itemData = null;
-    public ItemData ItemData
+
+    [NonSerialized] ItemData itemData = null;
+    public ItemData GetItemData()
     {
-        get
+        if (itemData == null || itemData.ItemID == 0)
         {
-            if(itemData == null || itemData.ItemID == 0)
-            {
-                itemData = TableLoader.Instance.GetTable<ItemTable>().GetItemDataByID(ItemID);
-            }
-            return itemData;
+            itemData = TableLoader.Instance.GetTable<ItemTable>().GetItemDataByID(ItemID);
         }
+        return itemData;
     }
     public SaveItemData DeepCopy()
     {
@@ -646,23 +643,26 @@ public class SaveQuestData
     public QuestStatus Status = QuestStatus.NotStarted;
     public List<QuestConditionProgress> Conditions = new List<QuestConditionProgress>();
 
-    public QuestData QuestTableData;
+    [NonSerialized] public QuestData QuestTableData;
     public bool IsCompleted => Conditions.TrueForAll(x => x.IsConditionCompleted(GetQuestData()));
     public SaveQuestData(QuestData _data)
     {
+        if (_data == null)
+            return;
+
         QuestID = _data.ID;
         QuestTableData = _data;
         for (int i = 0; i < _data.Conditions.Count; i++)
         {
             QuestConditionProgress progress = new QuestConditionProgress();
-            progress.ConditionIndex = i;
+            progress.ConditionIndex = (short)i;
             progress.CurrentCount = 0;
             Conditions.Add(progress);
         }
     }
     public QuestData GetQuestData()
     {
-        if(QuestTableData == null )
+        if (QuestTableData == null)
         {
             QuestTableData = TableLoader.Instance.GetTable<QuestTable>().GetQuestDataByID(QuestID);
         }
@@ -672,8 +672,8 @@ public class SaveQuestData
 [Serializable]
 public class QuestConditionProgress
 {
-    public int ConditionIndex;
-    public int CurrentCount;
+    public short ConditionIndex;
+    public short CurrentCount;
 
     public bool IsCompleted;
 
@@ -689,20 +689,27 @@ public class SaveSkillData
     public int SkillID;
     public int SkillLevel = 1;
     public KeyCode HotKey;
-    SkillData TableData;
+    [NonSerialized] SkillData TableData;
+
     public SkillData GetSkillData()
     {
-        if(TableData == null)
+        if (TableData == null)
             TableData = TableLoader.Instance.GetTable<SkillTable>().GetSkillDataByID(SkillID);
         return TableData;
     }
 }
 
-[Serializable] public class GameSaveData
+[Serializable]
+public class GameSaveData
 {
-    public int Gold;
+    public int Gold = 0;
+    public int JobID = 1;
     public List<SaveItemData> Inventory;
-    public List<SaveQuestData> ActiveQuests;
+    public Dictionary<QuestCategory, List<SaveQuestData>> ActiveQuests = new Dictionary<QuestCategory, List<SaveQuestData>>();
+    public Dictionary<ItemType, SaveItemData> EquipItems = new Dictionary<ItemType, SaveItemData>();
+    public Dictionary<KeyCode, SaveSkillData> ResisteredSkills = new Dictionary<KeyCode, SaveSkillData>();
+    public Dictionary<KeyCode, int> ResisteredItems = new Dictionary<KeyCode, int>();
+
 }
 #endregion[SaveData]
 #endregion[Class]

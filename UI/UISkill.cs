@@ -22,6 +22,7 @@ public class UISkill : UIPanel
     [SerializeField] TextMeshProUGUI requiredMP;
     [SerializeField] TextMeshProUGUI coolTimeTxt;
     [SerializeField] TextMeshProUGUI skillInfo;
+    [SerializeField] TextMeshProUGUI remainSkillPointTxt;
 
 
     public SkillListSlot currentSkillSlot;
@@ -68,15 +69,18 @@ public class UISkill : UIPanel
             currentSkillSlot?.DeSelectedSlot();
             currentSkillSlot = _slot;
         }
-        SkillData tbData = _slot.saveSkillData.GetSkillData();
+        SkillData tbData = _slot.SaveSkillData.GetSkillData();
         skillIcon.sprite = SpriteAtlasManager.Instance.GetSprite("Skill", tbData.SkillImage.name);
         skillName.text = tbData.Name;
-        skillLv.text = $"Lv.{_slot.saveSkillData.SkillLevel}";
+        skillLv.text = $"Lv.{_slot.SaveSkillData.SkillLevel}";
         requiredMP.text = $"소모 MP: {tbData.RequiredMP}";
         coolTimeTxt.text = $"쿨타임: {tbData.CoolTime}초";
         skillInfo.text = tbData.Description;
     }
-
+    void UpdateSkillPoint(int _remainPoint)
+    {
+        remainSkillPointTxt.text = _remainPoint.ToString("D0");
+    }
     public override void OnClickOpenButton()
     {
         base.OnClickOpenButton();
@@ -87,6 +91,5 @@ public class UISkill : UIPanel
     {
         base.OnClickCloseButton();
         currentSkillSlot = null;
-
     }
 }

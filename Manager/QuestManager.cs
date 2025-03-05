@@ -2,8 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEditor;
-using UnityEditor.UIElements;
 using UnityEngine;
 
 public class QuestManager : MonoBehaviour
@@ -23,6 +23,7 @@ public class QuestManager : MonoBehaviour
     //public List<int> finishedQuestData = new List<int>();
     //HashSet 사용 이유, int
     public HashSet<int> finishedQuestData = new HashSet<int>();
+    public Dictionary<QuestCategory, List<SaveQuestData>> ActiveQuests => activeQuests;
 
     void Awake()
     {
@@ -33,6 +34,10 @@ public class QuestManager : MonoBehaviour
         }
         else
             Destroy(gameObject);
+    }
+    private void Start()
+    {
+        activeQuests = GameManager.Instance.LoadGameData().ActiveQuests ?? new Dictionary<QuestCategory, List<SaveQuestData>>();
     }
 
     /// <summary>

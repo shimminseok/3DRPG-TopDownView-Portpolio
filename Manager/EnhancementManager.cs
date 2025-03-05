@@ -10,6 +10,7 @@ public class EnhancementManager : MonoBehaviour
 
 
     public event Action<SaveItemData> OnEnhancedItem;
+    public event Action OnEnhanceFail;
     public event Action OnEnhanceSuccess;
     void Awake()
     {
@@ -30,7 +31,7 @@ public class EnhancementManager : MonoBehaviour
     public void TryEnhance(SaveItemData _targetItem)
     {
         int level = _targetItem.enhanceLevel;
-        int grade = _targetItem.ItemData.ItemGrade;
+        int grade = _targetItem.GetItemData().ItemGrade;
 
         EnhanceData enhanceData = TableLoader.Instance.GetTable<EnhancementTable>().GetEnhanceDataByLevelAndGrade(level, grade);
 
@@ -63,7 +64,10 @@ public class EnhancementManager : MonoBehaviour
             EnhanceSuccess(_targetItem);
         }
         else
+        {
+
             Debug.LogWarning("강화 실패");
+        }
 
         //UIUpdate
         AccountManager.Instance.UseGold(enhanceData.GoldCost);
@@ -74,12 +78,10 @@ public class EnhancementManager : MonoBehaviour
         Debug.Log("강화 성공!");
         _targetItem.enhanceLevel++;
         OnEnhanceSuccess?.Invoke();
-
-
     }
     void EnhanceFailure()
     {
-
+        OnEnhanceFail?.Invoke();
     }
     bool CheckMaterialInInventory(MaterialRequirement _requiredMat)
     {

@@ -1,18 +1,20 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography;
 using UnityEngine;
 
 
 public class BuffManager : MonoBehaviour
 {
     Dictionary<BuffType, List<Buff>> activeBuffDic = new Dictionary<BuffType, List<Buff>>();
-    Dictionary<int, Coroutine> activeCoroutine = new Dictionary<int, Coroutine>();
 
 
     public event Action<Buff> OnBuffAdded;
     public event Action<Buff> OnBuffRemoved;
 
+    public Coroutine buffTimers;
     /// <summary>
     /// 버프를 추가하는 함수
     /// </summary>
@@ -33,9 +35,9 @@ public class BuffManager : MonoBehaviour
         buffList.Add(_buff);
         _buff.ApplyBuff();
         OnBuffAdded?.Invoke(_buff);
-        Coroutine activeCo = StartCoroutine(RemoveEffectAfterDuration(_buff));
+        if(buffTimers == null)
+            buffTimers = StartCoroutine(UpdateBuffTimers());
 
-        activeCoroutine[_buff.ID] = activeCo;
     }
     public void RemoveBuff(Buff _buff)
     {
@@ -46,8 +48,6 @@ public class BuffManager : MonoBehaviour
 
             if (buffList.Count == 0)
                 activeBuffDic.Remove(_buff.BuffType);
-
-            activeCoroutine.Remove(_buff.ID);
 
             OnBuffRemoved?.Invoke(_buff);
         }
@@ -62,30 +62,37 @@ public class BuffManager : MonoBehaviour
             }
         }
 
-        foreach (var co in activeCoroutine.Values)
-        {
-            StopCoroutine(co);
-        }
-
         activeBuffDic.Clear();
-        activeCoroutine.Clear();
     }
-    public IEnumerator RemoveEffectAfterDuration(Buff _buff)
+    IEnumerator UpdateBuffTimers()
     {
-        while(_buff.Duration > 0)
+        while (true)
         {
-            _buff.UpdateDuration(0.1f);
+            if(activeBuffDic.Count == 0)
+            {
+                yield return null;
+                continue;
+            }
             yield return new WaitForSeconds(0.1f);
+            foreach (var buffList in activeBuffDic.Values.ToList())
+            {
+                for (var i = 0; i < buffList.Count; i++)
+                {
+                    buffList[i].UpdateDuration(0.1f);
+                    if (buffList[i].Duration <= 0)
+                    {
+                        RemoveBuff(buffList[i]);
+                    }
+                }
+            }
         }
-        RemoveBuff(_buff);
     }
-
-    public Buff GetActiveBuff(BuffType _type, int _id)
+    public Buff GetActiveBuffByStatType(BuffType _type, StatType _stat)
     {
-        if(!activeBuffDic.TryGetValue(_type, out var buffList))
+        if (!activeBuffDic.TryGetValue(_type, out var buffList))
         {
-            return null; 
+            return null;
         }
-        return buffList.Find(x => x.ID == _id);
+        return buffList.Find(x => x.StatType == _stat);
     }
 }

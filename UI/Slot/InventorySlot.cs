@@ -3,17 +3,22 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
-public class InventorySlot : SlotBase, IPointerClickHandler, IDropHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class InventorySlot : SlotBase, ISelectableSlot, IDropHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [SerializeField] TextMeshProUGUI itemCountTxt;
+    [SerializeField] Image selectedImg;
     public int Index;
 
     ItemData data;
     SaveItemData saveItemData;
+    bool isSelected;
     public int Quantity => saveItemData.Quantity;
     public SaveItemData SaveItemData => saveItemData;
     public bool IsEmpty => saveItemData == null;
+
+
 
     public void SetItemInfo(SaveItemData _data = null)
     {
@@ -23,8 +28,8 @@ public class InventorySlot : SlotBase, IPointerClickHandler, IDropHandler, IBegi
             return;
         }
         saveItemData = _data;
-        data = _data.ItemData;
-        SetItemImage(data.ItemImg);
+        data = _data.GetItemData();
+        SetItemImage(SpriteAtlasManager.Instance.GetSprite("Item", data.ItemImg));
         SetItemGradeImg(data.ItemGrade);
         itemCountTxt.text = saveItemData.Quantity <= 1 ? string.Empty : saveItemData.Quantity.ToString("N0");
         DeSelectedSlot();
@@ -40,7 +45,7 @@ public class InventorySlot : SlotBase, IPointerClickHandler, IDropHandler, IBegi
         data = _data;
         saveItemData = new SaveItemData();
         saveItemData.ItemID = _data.ItemID;
-        SetItemImage(_data.ItemImg);
+        SetItemImage(SpriteAtlasManager.Instance.GetSprite("Item", data.ItemImg));
         SetItemGradeImg(_data.ItemGrade);
         itemCountTxt.text = _qty <= 1 ? string.Empty : saveItemData.Quantity.ToString("N0");
         DeSelectedSlot();
@@ -57,7 +62,7 @@ public class InventorySlot : SlotBase, IPointerClickHandler, IDropHandler, IBegi
     }
     public void RemoveQuantity(int _amount)
     {
-        if(saveItemData.Quantity - _amount < 0)
+        if (saveItemData.Quantity - _amount < 0)
         {
             Debug.LogError("보유 수량이 0보다 적습니다.");
             return;
@@ -65,7 +70,7 @@ public class InventorySlot : SlotBase, IPointerClickHandler, IDropHandler, IBegi
         saveItemData.Quantity -= _amount;
         UpdateItemInfo();
     }
-    
+
     public void Empty()
     {
         saveItemData = null;
@@ -78,15 +83,13 @@ public class InventorySlot : SlotBase, IPointerClickHandler, IDropHandler, IBegi
     {
         SelectedSlot();
     }
-    public override void SelectedSlot()
+    public void SelectedSlot()
     {
-        base.SelectedSlot();
         //TO Do
         UIInventory.Instance.SelecteItem(this);
     }
-    public override void DeSelectedSlot()
+    public void DeSelectedSlot()
     {
-        base.DeSelectedSlot();
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -94,9 +97,15 @@ public class InventorySlot : SlotBase, IPointerClickHandler, IDropHandler, IBegi
         if (IsEmpty || !EventSystem.current.IsPointerOverGameObject())
             return;
 
-        if(eventData.button == PointerEventData.InputButton.Left)
+        if (eventData.button == PointerEventData.InputButton.Left)
         {
-            SelectedSlot();
+            if (isSelected)
+                DeSelectedSlot();
+            else
+                SelectedSlot();
+
+            isSelected = !isSelected;
+            selectedImg.enabled = isSelected;
         }
         else if (eventData.button == PointerEventData.InputButton.Right) // 오른쪽 클릭 → 아이템 사용/장착
         {
@@ -106,18 +115,18 @@ public class InventorySlot : SlotBase, IPointerClickHandler, IDropHandler, IBegi
 
     public void UseOrEquipItem()
     {
-        if (EquipmentManager.Instance.IsEquipableType(saveItemData.ItemData.ItemType))
+        if (EquipmentManager.Instance.IsEquipableType(saveItemData.GetItemData().ItemType))
         {
-            Debug.Log($"{saveItemData.ItemData.Name} 장착!");
+            Debug.Log($"{saveItemData.GetItemData().Name} 장착!");
             var equipItem = saveItemData.DeepCopy();
             InventoryManager.Instance.RemoveItem(Index);
             EquipmentManager.Instance.EquipItem(equipItem);
 
         }
-        else if (saveItemData.ItemData.ItemType == ItemType.Potion)
+        else if (saveItemData.GetItemData().ItemType == ItemType.Potion)
         {
-            Debug.Log($"{saveItemData.ItemData.Name} 사용!");
-            InventoryManager.Instance.UseItem(Index,saveItemData);
+            Debug.Log($"{saveItemData.GetItemData().Name} 사용!");
+            InventoryManager.Instance.UseItem(Index, saveItemData);
         }
     }
     void SwichInvenSlot(InventorySlot _swich)
@@ -130,11 +139,11 @@ public class InventorySlot : SlotBase, IPointerClickHandler, IDropHandler, IBegi
         if (!DragManager.Instance.IsDragging)
             return;
 
-        if(DragManager.Instance.DraggedInventoryItem != null)
+        if (DragManager.Instance.DraggedInventoryItem != null)
         {
             SwichInvenSlot(DragManager.Instance.DraggedInventoryItem);
         }
-        else if(DragManager.Instance.DraggedEquipItemData != null)
+        else if (DragManager.Instance.DraggedEquipItemData != null)
         {
             if (saveItemData != null)
                 return;
@@ -142,7 +151,7 @@ public class InventorySlot : SlotBase, IPointerClickHandler, IDropHandler, IBegi
             {
                 saveItemData = DragManager.Instance.DraggedEquipItemData;
                 SetItemInfo(saveItemData);
-                EquipmentManager.Instance.UnEquipItem(saveItemData.ItemData.ItemType);
+                EquipmentManager.Instance.UnEquipItem(saveItemData.GetItemData().ItemType);
             }
         }
 

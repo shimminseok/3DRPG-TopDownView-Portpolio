@@ -4,14 +4,16 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using Unity.VisualScripting;
+using UnityEngine.EventSystems;
 
-public class AccQuuestListSlot : MonoBehaviour
+public class AccQuuestListSlot : MonoBehaviour, ISelectableSlot
 {
     public int npcID;
 
     [SerializeField] TextMeshProUGUI questName;
     [SerializeField] Image selectedImg;
 
+    bool isSelected;
     QuestData data;
 
     public void SetAccQuestListSlot(QuestData _data)
@@ -25,6 +27,27 @@ public class AccQuuestListSlot : MonoBehaviour
         selectedImg.enabled = true;
         UIDescription.Instance.OnClickAcceptQuest(data);
         QuestManager.Instance.OnTargetAchieved(QuestTargetType.NPC, npcID);
+    }
 
+    public void SelectedSlot()
+    {
+        selectedImg.enabled = true;
+        UIDescription.Instance.OnClickAcceptQuest(data);
+        QuestManager.Instance.OnTargetAchieved(QuestTargetType.NPC, npcID);
+    }
+
+    public void DeSelectedSlot()
+    {
+        selectedImg.enabled = false;
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (isSelected)
+            DeSelectedSlot();
+        else
+            SelectedSlot();
+
+        selectedImg.enabled = isSelected;
     }
 }

@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Experimental.AI;
 
 public class ObjectPoolManager : MonoBehaviour
 {
@@ -14,7 +13,6 @@ public class ObjectPoolManager : MonoBehaviour
 
     Dictionary<string,Transform> parentCache = new Dictionary<string, Transform>();
 
-    Transform poolGroup;
     void Awake()
     {
         if (Instance == null)

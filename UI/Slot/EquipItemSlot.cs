@@ -23,8 +23,8 @@ public class EquipItemSlot : SlotBase, IPointerClickHandler, IBeginDragHandler,I
             return;
         }
         equipItem = _item;
-        SetItemImage(_item.ItemData.ItemImg);
-        SetItemGradeImg(_item.ItemData.ItemGrade);
+        SetItemImage(SpriteAtlasManager.Instance.GetSprite("Item", equipItem.GetItemData().ItemImg));
+        SetItemGradeImg(_item.GetItemData().ItemGrade);
         itemEnhanceCnt.text = _item.enhanceLevel > 0 ? _item.enhanceLevel.ToString() : "";
     }
     void Empty()

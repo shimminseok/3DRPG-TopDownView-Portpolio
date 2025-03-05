@@ -1,12 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEditor.UIElements;
 using UnityEngine;
-using UnityEngine.AI;
 using UnityEngine.EventSystems;
-using UnityEngine.UI;
 
 public class InputHandler : MonoBehaviour
 {
@@ -14,13 +10,13 @@ public class InputHandler : MonoBehaviour
 
 
     Dictionary<KeyCode, HUDItemSlot> hudItemSlotMapping = new Dictionary<KeyCode, HUDItemSlot>();
-    Dictionary<KeyCode,HUDSkillSlot> hudSkillSlotMapping = new Dictionary<KeyCode, HUDSkillSlot>();
+    Dictionary<KeyCode, HUDSkillSlot> hudSkillSlotMapping = new Dictionary<KeyCode, HUDSkillSlot>();
 
 
     public event Action<Vector3> OnMove;
     public event Action<Vector3> OnAttack;
-    public event Action<SaveSkillData> OnSkill;
-    public event Action <KeyCode> OnUseItem;
+    public event Action<Vector3, SaveSkillData> OnSkill;
+    public event Action<KeyCode> OnUseItem;
 
     public event Action OnInteract;
     public Vector3 MovementInput { get; private set; }
@@ -61,7 +57,7 @@ public class InputHandler : MonoBehaviour
         KeyCode[] itemHotKeys = { KeyCode.Alpha1, KeyCode.Alpha2, KeyCode.Alpha3, KeyCode.Alpha4 };
         KeyCode[] skillHotKeys = { KeyCode.A, KeyCode.S, KeyCode.D, KeyCode.F };
 
-        for (int i = 0;  i < itemHotKeys.Length; i++)
+        for (int i = 0; i < itemHotKeys.Length; i++)
         {
             hudItemSlotMapping[itemHotKeys[i]] = UIHUD.Instance.GetHUDItemSlot(i);
         }
@@ -76,7 +72,7 @@ public class InputHandler : MonoBehaviour
         HandleKeyboardInput();
 
         hoverCheckTime += Time.deltaTime;
-        if(hoverCheckTime >= 0.1f && Input.mousePosition != lastMousePosion)
+        if (hoverCheckTime >= 0.1f && Input.mousePosition != lastMousePosion)
         {
             lastMousePosion = Input.mousePosition;
             hoverCheckTime = 0;
@@ -97,18 +93,16 @@ public class InputHandler : MonoBehaviour
                 OnMove?.Invoke(hit.point); // 이동 이벤트 호출
             }
         }
-        
+
         if (Input.GetMouseButtonDown(0))
         {
+            Vector3 mousePos = Input.mousePosition;
+            mousePos.z = mainCamera.transform.position.y;
+            Vector3 worldMousePos = mainCamera.ScreenToWorldPoint(mousePos);
+            worldMousePos.y = PlayerController.Instance.transform.position.y;
+            Vector3 dir = (worldMousePos - PlayerController.Instance.transform.position).normalized;
             Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-            if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity,LayerMask.GetMask("Ground")))
-            {
-                Vector3 targetPos = hit.point;
-                Vector3 dir = targetPos - PlayerController.Instance.transform.position;
-                dir.y = 0;
-                OnAttack?.Invoke(dir);
-
-            }
+            OnAttack?.Invoke(LookMousePointer());
         }
     }
     private void HandleKeyboardInput()
@@ -121,7 +115,7 @@ public class InputHandler : MonoBehaviour
         }
 
 
-        if(Input.GetKeyDown(KeyCode.K))
+        if (Input.GetKeyDown(KeyCode.K))
         {
             UIManager.Instance.CheckOpenPopup(UISkill.Instance);
         }
@@ -133,25 +127,26 @@ public class InputHandler : MonoBehaviour
         {
             UIManager.Instance.CheckOpenPopup(UIQuest.Instance);
         }
-        if(Input.GetKeyDown(KeyCode.P))
+        if (Input.GetKeyDown(KeyCode.P))
         {
             UIManager.Instance.CheckOpenPopup(UICharacterInfo.Instance);
         }
     }
     void HandleHotKeyInput()
     {
-        foreach(var key in hudItemSlotMapping.Keys)
+        foreach (var key in hudItemSlotMapping.Keys)
         {
-            if(Input.GetKeyDown(key))
+            if (Input.GetKeyDown(key))
             {
                 OnUseItem?.Invoke(key);
             }
         }
-        foreach(var key in hudSkillSlotMapping.Keys)
+        foreach (var key in hudSkillSlotMapping.Keys)
         {
-            if(Input.GetKeyDown(key))
+            if (Input.GetKeyDown(key))
             {
-                OnSkill?.Invoke(hudSkillSlotMapping[key].assigendSkill);
+
+                OnSkill?.Invoke(LookMousePointer(), hudSkillSlotMapping[key].assigendSkill);
             }
         }
 
@@ -163,7 +158,7 @@ public class InputHandler : MonoBehaviour
             return;
 
         Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-        if(Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity,1 << LayerMask.NameToLayer("NPC") | 1 << LayerMask.NameToLayer("Enemy")))
+        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, 1 << LayerMask.NameToLayer("NPC") | 1 << LayerMask.NameToLayer("Enemy")))
         {
             if (hit.collider.TryGetComponent<IDisplayable>(out IDisplayable displayable))
             {
@@ -176,7 +171,7 @@ public class InputHandler : MonoBehaviour
 
             }
         }
-        if(currentTarget != null)
+        if (currentTarget != null)
         {
             currentTarget.HideHUD();
             currentTarget = null;
@@ -196,4 +191,25 @@ public class InputHandler : MonoBehaviour
     {
         return hudSkillSlotMapping[_key];
     }
+
+    Vector3 LookMousePointer()
+    {
+        Vector3 targetPos = GetMousePosition();
+        Vector3 dir = (targetPos - PlayerController.Instance.transform.position).normalized;
+        dir.y = 0;
+        return dir;
+    }
+    public Vector3 GetMousePosition()
+    {
+        Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, LayerMask.GetMask("Ground")))
+        {
+            return hit.point;
+        }
+
+
+        return Vector3.zero;
+    }
+
+
 }

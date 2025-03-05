@@ -20,7 +20,7 @@ public class EnhanceMaterialSlot : SlotBase
         }
         itemImage.enabled = true;
         ItemData targetTbData = TableLoader.Instance.GetTable<ItemTable>().GetItemDataByID(_data.MaterialID);
-        SetItemImage(targetTbData.ItemImg);
+        SetItemImage(SpriteAtlasManager.Instance.GetSprite("Item", targetTbData.ItemImg));
         SetItemGradeImg(targetTbData.ItemGrade);
 
         targetItem = InventoryManager.Instance.GetInventoryItemByItemID(_data.MaterialID);

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class EquipmentManager : MonoBehaviour
@@ -11,6 +12,8 @@ public class EquipmentManager : MonoBehaviour
     Dictionary<ItemType, SaveItemData> equipmentItems = new Dictionary<ItemType, SaveItemData>();
 
     public event Action<ItemType> OnEquipmentChanged;
+
+    public Dictionary<ItemType, SaveItemData> EquipmentItems => equipmentItems;
 
 
     private void Awake()
@@ -24,13 +27,13 @@ public class EquipmentManager : MonoBehaviour
             Destroy(gameObject);
 
         //임시(초기화)
-        foreach (ItemType type in System.Enum.GetValues(typeof(ItemType)))
-        {
-            if (IsEquipableType(type))
-            {
-                equipmentItems[type] = null;
-            }
-        }
+        equipmentItems = GameManager.Instance.LoadGameData().EquipItems;
+        if (equipmentItems.Count == 0)
+            equipmentItems = Enum.GetValues(typeof(ItemType))
+                                 .Cast<ItemType>()
+                                 .Where(IsEquipableType)
+                                 .ToDictionary(t => t, t => (SaveItemData)null);
+
     }
 
     public bool IsEquipableType(ItemType _type)
@@ -49,8 +52,6 @@ public class EquipmentManager : MonoBehaviour
         }
     }
 
-
-
     public SaveItemData GetEquipmentItem(ItemType _type)
     {
         if (equipmentItems.ContainsKey(_type))
@@ -62,18 +63,18 @@ public class EquipmentManager : MonoBehaviour
 
     public void EquipItem(SaveItemData _data)
     {
-        if (_data == null || !IsEquipableType(_data.ItemData.ItemType))
+        if (_data == null || !IsEquipableType(_data.GetItemData().ItemType))
         {
             Debug.Log("장착이 불가능한 아이템입니다.");
             return;
         }
-        ItemType slot = _data.ItemData.ItemType;
+        ItemType slot = _data.GetItemData().ItemType;
 
         if (equipmentItems.ContainsKey(slot))
         {
             UnEquipItem(slot);
             equipmentItems[slot] = _data;
-            foreach (var stat in equipmentItems[slot].ItemData.ItemStats.Stats)
+            foreach (var stat in equipmentItems[slot].GetItemData().ItemStats.Stats)
             {
                 PlayerController.Instance.characterStat.Stats[stat.Key].ModifyEquipmentValue(stat.Value);
             }
@@ -87,7 +88,7 @@ public class EquipmentManager : MonoBehaviour
         if (equipmentItems.ContainsKey(_type) && equipmentItems[_type] != null)
         {
             InventoryManager.Instance.AddItem(equipmentItems[_type]);
-            foreach (var stat in equipmentItems[_type].ItemData.ItemStats.Stats)
+            foreach (var stat in equipmentItems[_type].GetItemData().ItemStats.Stats)
             {
                 PlayerController.Instance.characterStat.Stats[stat.Key].ModifyEquipmentValue(-stat.Value);
             }

@@ -2,10 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Experimental.AI;
 
 public class InventoryManager : MonoBehaviour
 {
@@ -13,8 +10,7 @@ public class InventoryManager : MonoBehaviour
 
     public int MaxLine = 7;
 
-
-
+    public Dictionary<KeyCode, SaveItemData> ResisterdItems = new Dictionary<KeyCode, SaveItemData>();
     List<SaveItemData> inventory = new List<SaveItemData>();
     public event Action<int> OnInventorySlotUpdate;
 
@@ -30,23 +26,21 @@ public class InventoryManager : MonoBehaviour
             Destroy(gameObject);
         }
 
-        for (int i = 0; i < MaxLine * 7; i++)
-        {
-            inventory.Add(null);
-        }
+        var gameData = GameManager.Instance.LoadGameData();
+        inventory = (gameData.Inventory != null && gameData.Inventory.Count > 0)
+                    ? gameData.Inventory
+                    : Enumerable.Repeat<SaveItemData>(null, MaxLine * 7).ToList();
     }
     void Start()
     {
         QuestManager.Instance.OnQuestReward += AddRewardItem;
-
-        LoadInventory();
     }
     public void AddItem(SaveItemData _item)
     {
-        if (_item.ItemData == null)
+        if (_item.GetItemData() == null)
             return;
         // 스택형 아이템
-        if (_item.ItemData.IsStackable)
+        if (_item.GetItemData().IsStackable)
         {
             SaveItemData findItem = inventory.Find(x => x != null && x.ItemID == _item.ItemID);
             if (findItem == null)
@@ -109,9 +103,7 @@ public class InventoryManager : MonoBehaviour
         var temp = inventory[_from];
         inventory[_from] = inventory[_to];
 
-
         inventory[_to] = temp;
-
 
 
         OnInventorySlotUpdate?.Invoke(_from);
@@ -119,7 +111,6 @@ public class InventoryManager : MonoBehaviour
 
         //TO DO
         //아이템을 등록한 상태에서 인벤토리내에서 아이템을 이동 할 경우 HUD에서 추적 할 수 있도록 변경
-        //HUDItemSlot hudSlot =  UIHUD.Instance.GetHUDItemSlotByRegisterSlot(_from);
     }
     public void UseItem(int _index, SaveItemData _item, int _useItemQty = 1)
     {
@@ -127,25 +118,24 @@ public class InventoryManager : MonoBehaviour
             return;
 
         if (_index == -1)
-        {
             _index = inventory.FindIndex(x => x != null && x.ItemID == _item.ItemID);
-        }
 
-        switch (_item.ItemData.ItemType)
+        switch (_item.GetItemData().ItemType)
         {
             case ItemType.Potion:
                 {
-                    foreach (var stat in _item.ItemData.ItemStats.Stats)
+                    foreach (var stat in _item.GetItemData().ItemStats.Stats)
                     {
                         if (stat.Key == StatType.HPRegen)
                         {
                             PlayerController.Instance.characterStat.RecoverHP((int)stat.Value);
-                            Debug.Log($"{_item.ItemData.Name}을 사용하여 HP {stat.Value} 회복!");
+                            //회복 이펙트 추가
+                            Debug.Log($"{_item.GetItemData().Name}을 사용하여 HP {stat.Value} 회복!");
                         }
-                        else if (stat.Key == StatType.MPRegen)
+                        else if (stat.Key == StatType.HPRegen)
                         {
                             PlayerController.Instance.characterStat.RecoverMP((int)stat.Value);
-                            Debug.Log($"{_item.ItemData.Name}을 사용하여 MP {stat.Value} 회복!");
+                            Debug.Log($"{_item.GetItemData().Name}을 사용하여 MP {stat.Value} 회복!");
                         }
                     }
 
@@ -184,17 +174,5 @@ public class InventoryManager : MonoBehaviour
     public SaveItemData GetInventoryItemAtSlot(int _index)
     {
         return (_index >= 0 && _index < inventory.Count) ? inventory[_index] : null;
-    }
-
-    public void LoadInventory()
-    {
-        inventory = SaveLoadManager.LoadList<SaveItemData>();
-        if(inventory.Count == 0)
-        {
-            for (int i = 0; i < MaxLine * 7; i++)
-            {
-                inventory.Add(null);
-            }
-        }
     }
 }

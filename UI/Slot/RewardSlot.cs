@@ -14,7 +14,7 @@ public class RewardSlot : MonoBehaviour
 
     public void SetRewardItem(SaveItemData _data)
     {
-        rewardItemIcon.sprite = SpriteAtlasManager.Instance.GetSprite("Item", _data.ItemData.ItemImg.name);
+        rewardItemIcon.sprite = SpriteAtlasManager.Instance.GetSprite("Item", _data.GetItemData().ItemImg);
         rewardQtyTxt.text = _data.Quantity == 0 ? string.Empty : $"x{_data.Quantity}";
     }
     public void SetRewardGold(int _gold)

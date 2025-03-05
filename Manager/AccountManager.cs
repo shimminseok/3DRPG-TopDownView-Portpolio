@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
 public class AccountManager : MonoBehaviour
 {
     public static AccountManager Instance { get; private set; }
@@ -21,10 +22,10 @@ public class AccountManager : MonoBehaviour
         }
         else
             Destroy(gameObject);
-
     }
     void Start()
     {
+        Gold = GameManager.Instance.LoadGameData().Gold;
         QuestManager.Instance.OnQuestReward += ApplyGoldRewad;
     }
 
@@ -32,7 +33,6 @@ public class AccountManager : MonoBehaviour
     {
         Gold += _amount;
         Debug.Log($"°ñµå È¹µæ : {_amount}, ÃÑ °ñµå : {Gold}");
-
         OnChangedGold?.Invoke(Gold);
     }
     public void UseGold(int _amount)

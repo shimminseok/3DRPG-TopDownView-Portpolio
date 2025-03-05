@@ -24,7 +24,7 @@ public class AttackAreaCollider : MonoBehaviour
     {
         if (IsPlayer)
         {
-            rangeData = PlayerController.Instance.jobData.AttackRangeData;
+            rangeData = PlayerController.Instance.JobData.AttackRangeData;
 
         }
         else

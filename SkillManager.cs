@@ -3,9 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml.Linq;
 using UnityEngine;
-using static UnityEngine.UI.Image;
 
 public class SkillManager : MonoBehaviour
 {
@@ -23,7 +21,7 @@ public class SkillManager : MonoBehaviour
 
 
     public List<SaveSkillData> AvailableSkills => availableSkills;
-
+    public Dictionary<KeyCode, SaveSkillData> ResisteredSkill => resisteredSkill;
     bool isCastingSkill;
 
     private void Awake()
@@ -58,17 +56,24 @@ public class SkillManager : MonoBehaviour
     {
         _caster.GetComponent<CharacterAnimator>()?.PlaySkillAnimation(_data);
     }
-    void HandleSkillEffect(SkillData _data, GameObject _caster)
+    void HandleSkillEffect(SkillData _data, Transform _caster)
     {
         if (_data.EffectPrefab != null)
         {
-            //임시 (오브젝트 풀에서 가져와야함)
-            //스킬을 등록하면 해당 스킬에 맞는 오브젝트를 풀에 등록시키고, 스킬 등록을 해제하면 풀에서 삭제 하는 방식 채용
             GameObject effect = ObjectPoolManager.Instance.GetObject(_data.EffectPrefab.name);
-            ParticleSystem particle = effect?.GetComponent<ParticleSystem>();
-            effect.transform.position = _caster.transform.position;
-            effect.transform.rotation = _caster.transform.rotation;
-            particle.Play(true);
+            ParticleSystem particle = effect?.GetComponentInChildren<ParticleSystem>(true);
+
+            switch(_data.RangeType)
+            {
+                case SkillRangeType.Point:
+                    effect.transform.position = InputHandler.Instance.GetMousePosition();
+                    break;
+                default:
+                    effect.transform.position = _caster.position;
+                    break;
+            }
+            effect.transform.rotation = _caster.rotation;
+            particle?.Play(true);
             ObjectPoolManager.Instance.ReturnObject(effect, particle.main.duration);
         }
     }
@@ -79,7 +84,7 @@ public class SkillManager : MonoBehaviour
         OnSkillCasting?.Invoke(skillData.CastingTime);
         yield return new WaitForSeconds(_skillData.GetSkillData().CastingTime);
         OnSkillUsed?.Invoke(_skillData.HotKey, skillData.CoolTime);
-        HandleSkillEffect(skillData, _caster);
+        HandleSkillEffect(skillData, _caster.transform);
         PlaySkillAnimation(skillData, _caster);
         foreach (var effect in skillData.SkillEffects)
         {
@@ -128,13 +133,14 @@ public class SkillManager : MonoBehaviour
     {
         if (_target.TryGetComponent<IDamageable>(out var damageable))
         {
-            if(_caster.TryGetComponent<IAttacker>(out var attacker))
+            if (_caster.TryGetComponent<IAttacker>(out var attacker))
             {
                 float finalDam = (attacker.FinalDam + _effect.FlatValue) * _effect.PercentValue;
                 damageable.TakeDamage(Mathf.RoundToInt(finalDam), attacker);
             }
         }
     }
+
     void ApplyBuffOrDebuff(SkillEffect _effect, GameObject _target)
     {
         BuffData data = buffTable.GetBuffDataByID(_effect.BuffID);
@@ -143,12 +149,18 @@ public class SkillManager : MonoBehaviour
             Debug.LogWarning($"BuffID {_effect.BuffID}가 존재하지 않습니다.");
             return;
         }
-        Buff buff = BuffFactory.CreateBuff(data, _effect, _target);
-
         var statusEffectManager = _target.GetComponent<BuffManager>() ?? _target.AddComponent<BuffManager>();
-        statusEffectManager.AddBuff(buff);
-    }
 
+        //같은 스탯을 증가/감소는 한가지밖에 적용이 안됨
+        Buff activeBuff = statusEffectManager.GetActiveBuffByStatType(data.BuffType, _effect.StatType);
+        if (activeBuff != null)
+            activeBuff.Duration = _effect.Duration;
+        else
+        {
+            activeBuff = BuffFactory.CreateBuff(data, _effect, _target);
+            statusEffectManager.AddBuff(activeBuff);
+        }
+    }
     public void AssignSkill(HUDSkillSlot _skillData)
     {
         resisteredSkill[_skillData.slotHotKey] = _skillData.assigendSkill;
@@ -228,6 +240,12 @@ public class SkillManager : MonoBehaviour
                 }
                 break;
             case SkillRangeType.Point:
+                Vector3 mousePos = InputHandler.Instance.GetMousePosition();
+                hitCnt = Physics.OverlapSphereNonAlloc(mousePos, _data.Radius, overlabResults, _targetLayer);
+                for (int i = 0; i < hitCnt; i++)
+                {
+                    hitColliders.Add(overlabResults[i]);
+                }
                 break;
         }
         return hitColliders;

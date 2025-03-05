@@ -47,7 +47,6 @@ public class UIQuest : UIPanel
         QuestManager.Instance.OnQuestAccepted += AcceptQuest;
         QuestManager.Instance.OnQuestAbandoned += AbandonQuest;
         QuestManager.Instance.OnQuestCompleted += CompletedQuest;
-
     }
     /// <summary>
     /// 퀘스트 수락 함수
@@ -142,6 +141,14 @@ public class UIQuest : UIPanel
     public override void OnClickOpenButton()
     {
         base.OnClickOpenButton();
+        foreach (var questList in QuestManager.Instance.ActiveQuests.Values)
+        {
+            foreach (var quest in questList)
+            {
+                AcceptQuest(quest);
+            }
+        }
+
         ShowQuestDetailInfo(SelectedQuestSlot);
     }
     public override void OnClickCloseButton()

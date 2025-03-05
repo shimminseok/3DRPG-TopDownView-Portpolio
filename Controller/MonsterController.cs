@@ -74,7 +74,7 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
             checkTimer = 0;
             objectRenderer.enabled = IsInView() || isChasing;
         }
-        if (currentState == CharacterState.Stun || currentState == CharacterState.Dead || currentState == CharacterState.Hit)
+        if (currentState == CharacterState.Stun || currentState == CharacterState.Dead || currentState == CharacterState.Hit || !IsInView())
         {
             return;
         }

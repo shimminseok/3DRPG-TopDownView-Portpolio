@@ -5,18 +5,8 @@ using UnityEngine.UI;
 
 public class SlotBase : MonoBehaviour
 {
-    public Image itemImage;
-    public Image itemGradeImage;
-    public Image selectedImg;
-
-    public virtual void SelectedSlot()
-    {
-        selectedImg.enabled = true;
-    }
-    public virtual void DeSelectedSlot()
-    {
-        selectedImg.enabled = false;
-    }
+    [SerializeField] protected Image itemImage;
+    [SerializeField] Image itemGradeImage;
 
 
     public virtual void SetItemImage(Sprite _sprite)

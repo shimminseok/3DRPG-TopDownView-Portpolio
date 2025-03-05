@@ -20,20 +20,13 @@ public class LoadSceneManager : MonoBehaviour
             Destroy(gameObject);
     }
 
-    public void LoadScene(int _type)
+    public void LoadScene(SceneType _type)
     {
-        StartCoroutine(LoadSceneAsync((SceneType)_type));
+        StartCoroutine(LoadSceneAsync(_type));
     }
 
     IEnumerator LoadSceneAsync(SceneType _type)
     {
-        //AsyncOperation op = SceneManager.LoadSceneAsync((int)_type);
-
-        //while(!op.isDone)
-        //{
-        //    yield return null;
-        //}
-
         AsyncOperation _sceneOp = SceneManager.LoadSceneAsync((int)_type);
         _sceneOp.allowSceneActivation = false;
 

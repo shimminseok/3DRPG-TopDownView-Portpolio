@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[DefaultExecutionOrder(-99)]
+
 public class TableLoader : MonoBehaviour
 {
     [SerializeField] NPCTable NPCTable;

@@ -2,16 +2,20 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class ShopItemSlot : SlotBase
+public class ShopItemSlot : SlotBase, ISelectableSlot
 {
     [SerializeField] TextMeshProUGUI itemName;
     [SerializeField] TextMeshProUGUI itemQty;
     [SerializeField] TextMeshProUGUI itemPrice;
+    [SerializeField] Image selectedImg;
+
 
 
     ItemData itemData;
+    bool isSelected;
     void Start()
     {
         DeSelectedSlot();
@@ -19,7 +23,7 @@ public class ShopItemSlot : SlotBase
     public void SetBuyItemData(ItemData _buyItem)
     {
         itemData = _buyItem;
-        SetItemImage(_buyItem.ItemImg);
+        SetItemImage(SpriteAtlasManager.Instance.GetSprite("Item", _buyItem.ItemImg));
         SetItemGradeImg(_buyItem.ItemGrade);
         ShowItemPrice(_buyItem.Price);
         itemName.text = _buyItem.Name;
@@ -27,7 +31,7 @@ public class ShopItemSlot : SlotBase
     }
     public void SetSaleItemData(ItemData _saleItem, int _qty)
     {
-        SetItemImage(_saleItem.ItemImg);
+        SetItemImage(SpriteAtlasManager.Instance.GetSprite("Item", _saleItem.ItemImg));
         SetItemGradeImg(_saleItem.ItemGrade);
         itemQty.text = _qty.ToString();
         ShowItemPrice(_saleItem.Price, _qty);
@@ -44,21 +48,32 @@ public class ShopItemSlot : SlotBase
         itemName.text = string.Empty;
         itemPrice.text = string.Empty;
     }
-    public override void DeSelectedSlot()
+    public void DeSelectedSlot()
     {
-        base.DeSelectedSlot();
+        isSelected = false;
     }
 
-    public override void SelectedSlot()
+    public void SelectedSlot()
     {
         if (itemData == null)
             return;
-        base.SelectedSlot();
         if (UIShop.Instance.SelectedItem != this)
         {
             UIShop.Instance.SelectedItem?.DeSelectedSlot();
             UIShop.Instance.SelectedItem = this;
         }
         UIShop.Instance.AddBuyListItem(itemData, 1);
+
+        isSelected = true;
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (isSelected)
+            DeSelectedSlot();
+        else
+            SelectedSlot();
+
+        selectedImg.enabled = isSelected;
     }
 }

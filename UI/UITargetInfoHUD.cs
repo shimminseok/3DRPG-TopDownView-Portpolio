@@ -25,11 +25,11 @@ public class UITargetInfoHUD : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(transform.root);
+            DontDestroyOnLoad(transform.root.gameObject);
         }
         else
         {
-            Destroy(transform.root);
+            Destroy(gameObject);
         }
 
         HideHUD();

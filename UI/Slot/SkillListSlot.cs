@@ -1,35 +1,33 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
+using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class SkillListSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [SerializeField] Image skillIcon;
     [SerializeField] TextMeshProUGUI skillName;
-    [SerializeField] TextMeshProUGUI SkillcurrentLevel;
     [SerializeField] Image selectedImg;
-    
-    public SaveSkillData saveSkillData;
+
+    public SaveSkillData SaveSkillData { get; private set; }
 
     public void SetSkillSlot(SaveSkillData _data)
     {
-        saveSkillData = _data;
-        SkillData tableData = saveSkillData.GetSkillData();
+        SaveSkillData = _data;
+        SkillData tableData = SaveSkillData.GetSkillData();
         skillIcon.sprite = SpriteAtlasManager.Instance.GetSprite("Skill", tableData.SkillImage);
-        SkillcurrentLevel.text = $"Lv.{saveSkillData.SkillLevel}";
         skillName.text = tableData.Name;
     }
 
-    public  void SelectedSlot()
+    public void SelectedSlot()
     {
         selectedImg.enabled = true;
         UISkill.Instance.DisplaySkillInfo(this);
     }
 
-    public  void DeSelectedSlot()
+    public void DeSelectedSlot()
     {
         selectedImg.enabled = false;
     }
@@ -38,19 +36,9 @@ public class SkillListSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         SelectedSlot();
     }
 
-    public void OnClickLevelUPBtn()
-    {
-        //스킬 포인트가 있으면
-        saveSkillData.SkillLevel++;
-    }
-    public void OnClickLevelDownBtn()
-    {
-        saveSkillData.SkillLevel--;
-    }
-
     public void OnBeginDrag(PointerEventData eventData)
     {
-        DragManager.Instance.StartDrag(saveSkillData, transform);
+        DragManager.Instance.StartDrag(SaveSkillData, transform);
     }
 
     public void OnDrag(PointerEventData eventData)

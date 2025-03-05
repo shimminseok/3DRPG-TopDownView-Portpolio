@@ -39,7 +39,6 @@ public class BaseStat : MonoBehaviour
     }
     public void RecoverHP(int _value)
     {
-        //체력 회복이 MaxHP의 FinalValue를 넘지않게 하기위해
         CurrentHP.ModifyBaseValue(_value, 0, Health.FinalValue);
     }
     public virtual Stat GetStat(StatType _type)

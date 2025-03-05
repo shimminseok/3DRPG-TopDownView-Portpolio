@@ -2,15 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Windows.Input;
-using Unity.VisualScripting;
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.EventSystems;
-using UnityEngine.PlayerLoop;
-using static UnityEngine.UI.CanvasScaler;
 
 public enum CharacterState
 {
@@ -53,14 +47,14 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
 
     [Header("Stat")]
     public PlayerStat characterStat = new PlayerStat();
-    public int jobID;
+    public int JobID { get; private set; }
 
     bool isInteractable;
     IInteractable interactableTarget;
 
 
     bool isDragging;
-    public JobData jobData;
+    public JobData JobData { get; private set; }
 
 
     public Transform Transform => transform;
@@ -127,12 +121,13 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
     }
     void SetJobData()
     {
-        jobData = TableLoader.Instance.GetTable<JobTable>()?.GetJobDataByID(jobID);
-        GameObject go = Instantiate(jobData.JobPrefabs, transform);
-        playerAnimator.animator.avatar = jobData.JobAvatar;
-        playerAnimator.animator.runtimeAnimatorController = jobData.Animator;
-        skillManager.RegisterSkill(jobData.JobID);
-        characterStat.InitializeFromJob(jobData);
+        JobID = GameManager.Instance.LoadGameData().JobID;
+        JobData = TableLoader.Instance.GetTable<JobTable>()?.GetJobDataByID(JobID);
+        GameObject go = Instantiate(JobData.JobPrefabs, transform);
+        playerAnimator.animator.avatar = JobData.JobAvatar;
+        playerAnimator.animator.runtimeAnimatorController = JobData.Animator;
+        skillManager.RegisterSkill(JobData.JobID);
+        characterStat.InitializeFromJob(JobData);
     }
     void UpdatePlayerState()
     {
@@ -216,15 +211,15 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
     }
     #endregion
     #region Skill
-    void HandleSkill(SaveSkillData _data)
+    void HandleSkill(Vector3 _mousePos, SaveSkillData _data)
     {
         if (currentState == CharacterState.Skill || currentState == CharacterState.Attack || currentState == CharacterState.Dead)
         {
             return;
         }
-        UseSkill(_data);
+        UseSkill(_mousePos,_data);
     }
-    public void UseSkill(SaveSkillData _data)
+    public void UseSkill(Vector3 _mousePos,SaveSkillData _data)
     {
         if (_data == null)
         {
@@ -242,6 +237,8 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
             return;
         }
         ChangeCharacterState(CharacterState.Skill);
+        Quaternion targetRot = Quaternion.LookRotation(_mousePos);
+        transform.rotation = targetRot;
         skillManager.ExecuteSkill(_data, gameObject);
         characterStat.CurrentMP.ModifyAllValue(_data.GetSkillData().RequiredMP, characterStat.MP.FinalValue);
     }
@@ -357,7 +354,7 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
         InputHandler.Instance.OnSkill += HandleSkill;
         Init();
         playerAnimator.animator.Play("Combat_2H_Ready");
-        characterStat.InitializeFromJob(jobData);
+        characterStat.InitializeFromJob(JobData);
     }
     void OnTriggerEnter(Collider other)
     {

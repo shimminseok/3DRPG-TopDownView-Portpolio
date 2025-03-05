@@ -14,7 +14,7 @@ public class MonsterSpawner : MonoBehaviour
     List<MonsterController> activeMonsters = new List<MonsterController>();
     MonsterTable monsterTable;
 
-    int maxSpawnCount = 4;
+    [SerializeField] int maxSpawnCount = 4;
     bool isFirstInArea;
 
 

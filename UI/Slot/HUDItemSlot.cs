@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -26,25 +27,18 @@ public class HUDItemSlot : MonoBehaviour, IDropHandler
     }
     public void Empty()
     {
-        itemData = null;
-        icon.enabled = false;
-        itemQtyText.text = string.Empty;
-        registedInventoryIndex = -1;
-        InventoryManager.Instance.OnInventorySlotUpdate -= UpdateHUDSlot;
+        UnRegistedItem();
     }
     public void SetItemSlot(int _index)
     {
         SaveItemData data = InventoryManager.Instance.GetInventoryItemAtSlot(_index);
-        if (data == null)
+        itemData = data;
+        if (itemData == null)
         {
             Empty();
             return;
         }
-        itemData = data;
-        icon.enabled = true;
-        icon.sprite = data.ItemData.ItemImg;
-        itemQtyText.text = data.Quantity.ToString();
-        registedInventoryIndex = _index;
+        RegistedItem(_index);
     }
     public void OnDrop(PointerEventData eventData)
     {
@@ -53,11 +47,27 @@ public class HUDItemSlot : MonoBehaviour, IDropHandler
 
         InventorySlot draggedItem = DragManager.Instance.DraggedInventoryItem;
          
-        if (draggedItem.SaveItemData.ItemData.IsUseable && draggedItem.SaveItemData.ItemData.ItemType == ItemType.Potion)
+        if (draggedItem.SaveItemData.GetItemData().IsUseable && draggedItem.SaveItemData.GetItemData().ItemType == ItemType.Potion)
         {
             SetItemSlot(draggedItem.Index);
-            InventoryManager.Instance.OnInventorySlotUpdate += UpdateHUDSlot;
+            InventoryManager.Instance.ResisterdItems[slotHotKey] = itemData;
         }
+    }
+    void RegistedItem(int _index)
+    {
+        icon.enabled = true;
+        icon.sprite = SpriteAtlasManager.Instance.GetSprite("Item", itemData.GetItemData().ItemImg);
+        itemQtyText.text = itemData.Quantity.ToString();
+        registedInventoryIndex = _index;
+        InventoryManager.Instance.OnInventorySlotUpdate += UpdateHUDSlot;
+    }
+    void UnRegistedItem()
+    {
+        itemData = null;
+        icon.enabled = false;
+        itemQtyText.text = string.Empty;
+        registedInventoryIndex = -1;
+        InventoryManager.Instance.OnInventorySlotUpdate -= UpdateHUDSlot;
     }
     public void UseItem(KeyCode _code)
     {

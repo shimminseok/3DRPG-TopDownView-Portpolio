@@ -22,7 +22,7 @@ public class CameraController : MonoBehaviour
 
 
     CinemachineFramingTransposer transposer;
-
+    private List<Renderer> previousObstacles = new List<Renderer>(); // 이전 장애물 리스트
     LayerMask obstacleLayer;
 
     float xRotation = 0f;
@@ -32,7 +32,7 @@ public class CameraController : MonoBehaviour
     float cinemachineTargetYaw;
     float cinemachineTargetPitch;
 
-
+    public CinemachineVirtualCamera MainCamera => mainCam;
     void Awake()
     {
         if(Instance == null)
@@ -79,6 +79,9 @@ public class CameraController : MonoBehaviour
         HandleZoom();
         //mainCam.transform.localPosition = mainCam.transform.rotation * new Vector3(0, 0, -distance) + playerBody.position;
     }
+
+    // Camera script
+
     void HandleRotation()
     {
         if (!Input.GetMouseButton(1))

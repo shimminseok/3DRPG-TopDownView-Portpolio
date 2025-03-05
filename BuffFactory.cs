@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-//임시
-// 스텟부스트 종류 : 공격력, 방어력, 이동속도, 공격속도 등을 추가해줘야함.
 public static class BuffFactory 
 {
 

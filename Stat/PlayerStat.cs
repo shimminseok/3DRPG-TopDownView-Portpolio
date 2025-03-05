@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using Unity.VisualScripting;
 using UnityEngine;
-using static Cinemachine.DocumentationSortingAttribute;
-
 public class PlayerStat : BaseStat
 {
     public Stat CriticalChance = new Stat(StatType.CriticalChance);
@@ -95,9 +93,9 @@ public class PlayerStat : BaseStat
         Level.ModifyBaseValue(1, 1); // 레벨 증가
         Experience.ResetModifiers(); // 기존 경험치 초기화
         Experience.ModifyBaseValue(_remainExp); // 초과 경험치 반영
-
         Debug.Log($"[PlayerStat] 레벨업! 현재 레벨: {Level.FinalValue}");
     }
+
     int CalculateNextLevelEXP()
     {
         float baseEXP = 100f;

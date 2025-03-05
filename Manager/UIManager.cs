@@ -1,15 +1,12 @@
+using Spine.Unity;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.UIElements;
 using UnityEngine;
+
 
 public class UIManager : MonoBehaviour
 {
     public static UIManager Instance;
-
-    [Header("Scene UI")]
-    public GameObject QuestPanel;
-    public GameObject InventoryPanel;
 
 
     List<UIPanel> openedPopup = new List<UIPanel>();
@@ -62,5 +59,12 @@ public class UIManager : MonoBehaviour
     public void ShowPopup(string _msg)
     {
 
+    }
+
+    public void PlaySkeletonAnimation(SkeletonGraphic _effect, string _aniName, bool _loop = false)
+    {
+        _effect.gameObject.SetActive(true);
+        _effect.AnimationState.ClearTracks();
+        _effect.AnimationState.SetAnimation(0,_aniName, _loop);
     }
 }
