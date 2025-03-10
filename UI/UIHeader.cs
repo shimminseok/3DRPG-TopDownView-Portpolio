@@ -11,6 +11,8 @@ public class UIHeader : MonoBehaviour, IPointerDownHandler, IDragHandler
     Vector2 beginPoint;
     Vector2 moveBegin;
 
+
+    UIPanel targetPanel;
     void Awake()
     {
         targetTrans = transform.parent;
@@ -25,16 +27,11 @@ public class UIHeader : MonoBehaviour, IPointerDownHandler, IDragHandler
         beginPoint = targetTrans.position;
         moveBegin = eventData.position;
     }
-
-    // Start is called before the first frame update
-    void Start()
+    public void OnClickCloseBtn()
     {
-        
-    }
+        if(targetPanel == null)
+            targetPanel = GetComponentInParent<UIPanel>();
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+        targetPanel?.Close();
     }
 }

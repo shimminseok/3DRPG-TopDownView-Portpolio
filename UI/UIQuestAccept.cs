@@ -87,7 +87,7 @@ public class UIQuestAccept : UIPanel
         }
 
 
-        OnClickOpenButton();
+        Open();
     }
     public void OnClickAvailQuest(NPCController _controller)
     {
@@ -168,15 +168,15 @@ public class UIQuestAccept : UIPanel
     {
         registeredQuests.ForEach(x => x.gameObject.SetActive(false));
     }
-    public override void OnClickOpenButton()
+    public override void Open()
     {
-        base.OnClickOpenButton();
+        base.Open();
         actionBtns[0].SetActive(selectedSaveData == null || selectedSaveData.Status == QuestStatus.NotStarted);
         actionBtns[1].SetActive(selectedSaveData != null && !selectedSaveData.IsCompleted);
         actionBtns[2].SetActive(selectedSaveData != null && selectedSaveData.IsCompleted);
     }
-    public override void OnClickCloseButton()
+    public override void Close()
     {
-        base.OnClickCloseButton();
+        base.Close();
     }
 }

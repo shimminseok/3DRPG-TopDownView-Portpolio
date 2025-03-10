@@ -51,6 +51,10 @@ public class ShopItemSlot : SlotBase, ISelectableSlot
     public void DeSelectedSlot()
     {
         isSelected = false;
+        selectedImg.gameObject.SetActive(false);
+
+
+        Debug.Log($"비활성화 {itemData.Name}");
     }
 
     public void SelectedSlot()
@@ -65,15 +69,9 @@ public class ShopItemSlot : SlotBase, ISelectableSlot
         UIShop.Instance.AddBuyListItem(itemData, 1);
 
         isSelected = true;
-    }
 
-    public void OnPointerClick(PointerEventData eventData)
-    {
-        if (isSelected)
-            DeSelectedSlot();
-        else
-            SelectedSlot();
+        selectedImg.gameObject.SetActive(true);
+        Debug.Log($"활성화 {itemData.Name}");
 
-        selectedImg.enabled = isSelected;
     }
 }

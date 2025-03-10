@@ -81,15 +81,15 @@ public class UISkill : UIPanel
     {
         remainSkillPointTxt.text = _remainPoint.ToString("D0");
     }
-    public override void OnClickOpenButton()
+    public override void Open()
     {
-        base.OnClickOpenButton();
+        base.Open();
         InstanteSkillListSlot();
         skillInfoObj.SetActive(false);
     }
-    public override void OnClickCloseButton()
+    public override void Close()
     {
-        base.OnClickCloseButton();
+        base.Close();
         currentSkillSlot = null;
     }
 }

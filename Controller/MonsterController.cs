@@ -1,4 +1,3 @@
-using Michsky.MUIP;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -17,6 +16,7 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
     [SerializeField] NavMeshAgent agent;
     [SerializeField] CapsuleCollider bodyCollider;
     [SerializeField] MonsterStat monsterStat;
+
 
     public int ID;
     public MonsterData monsterData;
@@ -152,6 +152,7 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
     {
         _dam = CalculateDamage(_dam);
         monsterStat.CurrentHP.ModifyAllValue(_dam);
+        DamageTextSpawner.Instance.ShowDamage(_dam, transform.position);
         if (monsterStat.CurrentHP.FinalValue <= 0)
         {
             Die();
@@ -180,14 +181,11 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
         animator.ResetTrigger("Hit");
         animator.ResetTrigger("Attack");
         ChangeCharacterState(CharacterState.Dead);
-        StopMovement();
-
         OnDeath?.Invoke(this);
 
         QuestManager.Instance.OnTargetAchieved(QuestTargetType.Monster, ID);
-        ObjectPoolManager.Instance.ReturnObject(gameObject, 3);
+        ObjectPoolManager.Instance.ReturnObject(gameObject, 3,Init);
         agent.enabled = false;
-        Invoke("Init", 3.2f);
         monsterStat.CurrentHP.OnStatChanged -= UpdateHealth;
         PlayerController.Instance.OnPlayerDeath -= HandlePlayerDeath;
         PlayerController.Instance.characterStat.GainExp(50);
@@ -232,6 +230,8 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
     }
     public void StopMovement()
     {
+        if(!agent.isOnNavMesh)
+            Debug.LogWarning($"네비메쉬 위에 없음!");
         agent.isStopped = true;
         agent.ResetPath();
         animator.PlayMoveAnimation(false);

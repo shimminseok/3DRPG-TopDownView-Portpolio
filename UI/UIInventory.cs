@@ -70,13 +70,13 @@ public class UIInventory : UIPanel
         SelectedItem = _item;
     }
 
-    public override void OnClickOpenButton()
+    public override void Open()
     {
-        base.OnClickOpenButton();
+        base.Open();
     }
-    public override void OnClickCloseButton()
+    public override void Close()
     {
-        base.OnClickCloseButton();
+        base.Close();
         SelectedItem?.DeSelectedSlot();
         SelectedItem = null;
     }

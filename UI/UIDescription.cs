@@ -26,7 +26,6 @@ public class UIDescription : UIPanel
     public QuestData SelectedQuestData;
 
     bool isFinishText;
-    bool isSkip;
     public bool isDialogueRunning;
 
     NPCData data;
@@ -74,7 +73,7 @@ public class UIDescription : UIPanel
         controller = _controller;
         data = controller.NPCData;
         npcName.text = data.Name;
-        OnClickOpenButton();
+        Open();
         currentCoroutine = StartCoroutine(StartDialogue(data.DefaultDialogues));
 
         //만약 완료된 퀘스트가 있다면 완료된 퀘스트 표시
@@ -134,15 +133,15 @@ public class UIDescription : UIPanel
         }
     }
 
-    public override void OnClickOpenButton()
+    public override void Open()
     {
-        base.OnClickOpenButton();
+        base.Open();
         CameraController.Instance.ChangeDialogueCamera(controller.dialogueCamTrans, true);
         UIHUD.Instance.gameObject.SetActive(false);
     }
-    public override void OnClickCloseButton()
+    public override void Close()
     {
-        base.OnClickCloseButton();
+        base.Close();
         CameraController.Instance.ChangeDialogueCamera(controller.dialogueCamTrans, false);
         ResetDescription();
         isDialogueRunning = false;

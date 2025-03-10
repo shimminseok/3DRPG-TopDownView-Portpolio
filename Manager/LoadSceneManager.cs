@@ -33,12 +33,14 @@ public class LoadSceneManager : MonoBehaviour
 
         while (_sceneOp.progress < 0.9f)
         {
+            Debug.Log("로딩중....");
             yield return null;
         }
 
         _sceneOp.allowSceneActivation = true;
         while(!_sceneOp.isDone)
         {
+            Debug.Log("씬로드중....");
             yield return null;
         }
     }

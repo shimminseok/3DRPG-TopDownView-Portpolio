@@ -10,7 +10,6 @@ public class EquipItemSlot : SlotBase, IPointerClickHandler, IBeginDragHandler,I
     [SerializeField] TextMeshProUGUI itemEnhanceCnt; 
     [SerializeField] ItemType itemType;
 
-    bool isDrag = false;
     SaveItemData equipItem;
 
 

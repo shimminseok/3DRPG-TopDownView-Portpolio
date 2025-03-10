@@ -1,4 +1,3 @@
-using Michsky.MUIP;
 using Spine.Unity;
 using System;
 using System.Collections;
@@ -62,9 +61,9 @@ public class UIEnhancement : UIPanel
 
     }
 
-    public override void OnClickOpenButton()
+    public override void Open()
     {
-        base.OnClickOpenButton();
+        base.Open();
         EnhancementManager.Instance.OnEnhancedItem += UpdateEnhancementUI;
         EnhancementManager.Instance.OnEnhanceSuccess += EnhanceSuccess;
         EnhancementManager.Instance.OnEnhanceFail += EnhanceFailure;
@@ -85,9 +84,9 @@ public class UIEnhancement : UIPanel
         UpdateCurrentGoldUI(AccountManager.Instance.Gold);
         ResetUI();
     }
-    public override void OnClickCloseButton()
+    public override void Close()
     {
-        base.OnClickCloseButton();
+        base.Close();
         EnhancementManager.Instance.OnEnhancedItem -= UpdateEnhancementUI;
         EnhancementManager.Instance.OnEnhanceSuccess -= EnhanceSuccess;
         EnhancementManager.Instance.OnEnhanceFail -= EnhanceFailure;

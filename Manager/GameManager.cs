@@ -14,7 +14,6 @@ public class GameManager : MonoBehaviour
 
     public Transform RespawnPoint;
 
-    public GameSaveData GameSaveData { get; private set; }
 
     void Awake()
     {
@@ -27,30 +26,28 @@ public class GameManager : MonoBehaviour
         else
             Destroy(gameObject);
     }
-    void Start()
-    {
-
-    }
     void OnApplicationQuit()
     {
-        if(GameSaveData == null)
-            GameSaveData = new  GameSaveData();
+        GameSaveData gameSaveData = SaveLoadManager.GameData;
 
-        GameSaveData.Inventory = InventoryManager.Instance.GetInventoryItem();
-        GameSaveData.ActiveQuests = QuestManager.Instance.ActiveQuests;
-        GameSaveData.Gold = AccountManager.Instance.Gold;
-        GameSaveData.EquipItems = EquipmentManager.Instance.EquipmentItems;
-        GameSaveData.JobID = PlayerController.Instance.JobID;
+        if (gameSaveData == null)
+            gameSaveData = new GameSaveData();
+
+        gameSaveData.Inventory = InventoryManager.Instance.GetInventoryItem();
+        gameSaveData.ActiveQuests = QuestManager.Instance.ActiveQuests;
+        gameSaveData.Gold = AccountManager.Instance.Gold;
+        gameSaveData.EquipItems = EquipmentManager.Instance.EquipmentItems;
+        gameSaveData.JobID = PlayerController.Instance.JobID;
         foreach (var skill in PlayerController.Instance.SkillManager.ResisteredSkill)
         {
-            GameSaveData.ResisteredSkills[skill.Key] = skill.Value;
+            gameSaveData.ResisteredSkills[skill.Key] = skill.Value;
         }
         foreach (var item in UIHUD.Instance.HUDItemSlot)
         {
-            GameSaveData.ResisteredItems[item.slotHotKey] = item.registedInventoryIndex;
+            gameSaveData.ResisteredItems[item.slotHotKey] = item.registedInventoryIndex;
         }
-
-        SaveLoadManager.SaveData(GameSaveData, "SaveData");
+        gameSaveData.VectorData = new List<float> { PlayerController.Instance.transform.position.x, PlayerController.Instance.transform.position.y, PlayerController.Instance.transform.position.z };
+        SaveLoadManager.SaveData(gameSaveData, "SaveData");
     }
     public GameSaveData LoadGameData()
     {
@@ -59,10 +56,17 @@ public class GameManager : MonoBehaviour
     void OnSceneLoaded(Scene _scene, LoadSceneMode _mode)
     {
         GameObject targetObj = GameObject.Find("StartingPoint");
-        if(targetObj != null)
+        if (targetObj != null)
         {
             RespawnPoint = targetObj.transform;
         }
+        Vector3 loadPostion = LoadGameData().VectorData.Count != 0 ? new Vector3(LoadGameData().VectorData[0], LoadGameData().VectorData[1], LoadGameData().VectorData[2]) : Vector3.zero;
+        if (loadPostion != Vector3.zero && loadPostion != RespawnPoint.position)
+        {
+            RespawnPoint.position = loadPostion;
+        }
+
+
     }
     private void OnDestroy()
     {

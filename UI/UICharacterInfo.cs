@@ -58,9 +58,9 @@ public class UICharacterInfo : UIPanel
         }
     }
 
-    public override void OnClickOpenButton()
+    public override void Open()
     {
-        base.OnClickOpenButton();
+        base.Open();
         EquipmentManager.Instance.OnEquipmentChanged += UpdateEquipItem;
         for (int i = 0; i < Enum.GetValues(typeof(ItemType)).Length; ++i)
         {
@@ -71,9 +71,9 @@ public class UICharacterInfo : UIPanel
             UpdateStatUI(stat);
         }
     }
-    public override void OnClickCloseButton()
+    public override void Close()
     {
-        base.OnClickCloseButton();
+        base.Close();
         EquipmentManager.Instance.OnEquipmentChanged -= UpdateEquipItem;
     }
 

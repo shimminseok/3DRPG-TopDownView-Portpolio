@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -130,6 +131,10 @@ public class InputHandler : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.P))
         {
             UIManager.Instance.CheckOpenPopup(UICharacterInfo.Instance);
+        }
+        if(Input.GetKeyDown(KeyCode.Escape))
+        {
+            UIManager.Instance.HandleEscapeKey();
         }
     }
     void HandleHotKeyInput()

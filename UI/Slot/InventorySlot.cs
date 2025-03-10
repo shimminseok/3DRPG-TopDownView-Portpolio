@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class InventorySlot : SlotBase, ISelectableSlot, IDropHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class InventorySlot : SlotBase, ISelectableSlot, IDropHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
 {
     [SerializeField] TextMeshProUGUI itemCountTxt;
     [SerializeField] Image selectedImg;

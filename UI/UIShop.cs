@@ -28,7 +28,6 @@ public class UIShop : UIPanel
 
 
     int totalBuyItemPrice = 0;
-    bool isBuying = true;
     Toggle currentTg;
 
     public ShopItemSlot SelectedItem
@@ -69,17 +68,17 @@ public class UIShop : UIPanel
         {
             itemInCart[i].Empty();
         }
-        OnClickOpenButton();
+        Open();
     }
 
-    public override void OnClickOpenButton()
+    public override void Open()
     {
-        base.OnClickOpenButton();
-        UIInventory.Instance.OnClickOpenButton();
+        base.Open();
+        UIInventory.Instance.Open();
     }
-    public override void OnClickCloseButton()
+    public override void Close()
     {
-        base.OnClickCloseButton();
+        base.Close();
         ClearCart();
     }
 
@@ -95,7 +94,10 @@ public class UIShop : UIPanel
             return;
 
         if (!AccountManager.Instance.IsEnoughtGold(totalBuyItemPrice + _data.Price))
+        {
+            UIHUD.Instance.OnAletMessage?.Invoke("골드가 부족합니다.");
             return;
+        }
 
         var item = itemInCart.Find(x => !x.IsEmpty && x.SaveItemData.ItemID == _data.ItemID);
         if (item == null)
@@ -106,7 +108,7 @@ public class UIShop : UIPanel
         }
         item.AddQuantity(_qty);
         totalBuyItemPrice += _data.Price;
-        Debug.Log($"아이템을 구매 리스트에 {_qty}개 추가했습니다.");
+        UIHUD.Instance.OnAletMessage?.Invoke($"아이템을 구매 리스트에 {_qty}개 추가했습니다.");
     }
     public void OnClickBuyItemBtn()
     {

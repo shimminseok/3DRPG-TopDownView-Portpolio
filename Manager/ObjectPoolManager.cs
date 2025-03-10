@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class ObjectPoolManager : MonoBehaviour
 {
@@ -85,7 +86,7 @@ public class ObjectPoolManager : MonoBehaviour
     /// 사용한 오브젝트를 풀에 반납하는 함수
     /// </summary>
     /// <param name="_obj"></param>
-    IEnumerator DelayedReturnObject(GameObject _obj, float _returnTime)
+    IEnumerator DelayedReturnObject(GameObject _obj, UnityAction _action,float _returnTime)
     {
         if (!poolObjects.ContainsKey(_obj.name))
         {
@@ -94,11 +95,12 @@ public class ObjectPoolManager : MonoBehaviour
         }
         yield return new WaitForSeconds(_returnTime);
         _obj.SetActive(false);
+        _action?.Invoke();
         poolObjects[_obj.name].Enqueue(_obj);
     }
-    public void ReturnObject(GameObject _obj, float _returnTime = 0)
+    public void ReturnObject(GameObject _obj, float _returnTime = 0, UnityAction _action = null)
     {
-        StartCoroutine(DelayedReturnObject(_obj, _returnTime));
+        StartCoroutine(DelayedReturnObject(_obj, _action,_returnTime));
     }
     public void RemovePool(string _name)
     {

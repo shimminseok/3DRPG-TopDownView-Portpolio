@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 
 public class UIHUD : MonoBehaviour
 {
@@ -31,7 +32,6 @@ public class UIHUD : MonoBehaviour
     [SerializeField] GameObject interactBtn;
     [SerializeField] GameObject interactShadowObj;
     Coroutine blinkCorotine;
-    public event Action<bool> OnViewInteractUI;
     Dictionary<Buff, GameObject> activeBuffSlot = new Dictionary<Buff, GameObject>();
 
     [SerializeField] CanvasGroup levelUpCanvasGroup;
@@ -45,7 +45,14 @@ public class UIHUD : MonoBehaviour
     [Header("Top")]
     [SerializeField] TextMeshProUGUI areaName;
 
+    [Header("AlertMessage")]
+    [SerializeField] CanvasGroup alertMessageCanvas;
+    [SerializeField] TextMeshProUGUI alertMessage;
+
     public List<HUDItemSlot> HUDItemSlot => hudItemSlots;
+
+
+    public Action<string> OnAletMessage;
     private void Awake()
     {
         if (Instance == null)
@@ -57,6 +64,8 @@ public class UIHUD : MonoBehaviour
         {
             Destroy(gameObject);
         }
+
+        OnAletMessage += ShowAlertMessage;
     }
     void Start()
     {
@@ -111,6 +120,8 @@ public class UIHUD : MonoBehaviour
     }
     public void UpdateAreaName(string _areaName)
     {
+        areaName.DOFade(1, 3f).SetEase(Ease.OutExpo).From(0).OnComplete(() => areaName.DOFade(0,1.5f).SetEase(Ease.OutExpo));
+        areaName.text = _areaName;
 
     }
     public void HandleSkillUsed(KeyCode _hotkey, float _coolTime)
@@ -220,5 +231,29 @@ public class UIHUD : MonoBehaviour
         {
             findSlot.UpdateHUDQuestSlot(_quest);
         }
+    }
+
+
+    void ShowAlertMessage(string _msg)
+    {
+        alertMessage.text = _msg;
+
+        alertMessageCanvas.DOKill();
+        alertMessageCanvas.alpha = 0;
+        alertMessageCanvas.gameObject.SetActive(true);
+
+        alertMessageCanvas.DOFade(1, 0.3f)
+            .OnComplete(() =>
+            {
+                DOVirtual.DelayedCall(0.5f, () =>
+                {
+                    alertMessageCanvas.DOFade(0, 0.3f).OnComplete(() => alertMessageCanvas.gameObject.SetActive(false));
+                });
+            });
+    }
+
+    private void OnDestroy()
+    {
+        OnAletMessage -= ShowAlertMessage;
     }
 }

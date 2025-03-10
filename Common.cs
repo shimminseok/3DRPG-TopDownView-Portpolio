@@ -191,7 +191,7 @@ public interface IDisplayable
     void ShowHUD();
     void HideHUD();
 }
-public interface ISelectableSlot : IPointerClickHandler
+public interface ISelectableSlot
 {
     void SelectedSlot();
     void DeSelectedSlot();
@@ -702,6 +702,7 @@ public class SaveSkillData
 [Serializable]
 public class GameSaveData
 {
+    public string NickName = string.Empty;
     public int Gold = 0;
     public int JobID = 1;
     public List<SaveItemData> Inventory;
@@ -709,6 +710,7 @@ public class GameSaveData
     public Dictionary<ItemType, SaveItemData> EquipItems = new Dictionary<ItemType, SaveItemData>();
     public Dictionary<KeyCode, SaveSkillData> ResisteredSkills = new Dictionary<KeyCode, SaveSkillData>();
     public Dictionary<KeyCode, int> ResisteredItems = new Dictionary<KeyCode, int>();
+    public List<float> VectorData = new List<float>();
 
 }
 #endregion[SaveData]

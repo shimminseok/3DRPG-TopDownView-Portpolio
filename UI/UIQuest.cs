@@ -138,9 +138,9 @@ public class UIQuest : UIPanel
             }
         }
     }
-    public override void OnClickOpenButton()
+    public override void Open()
     {
-        base.OnClickOpenButton();
+        base.Open();
         foreach (var questList in QuestManager.Instance.ActiveQuests.Values)
         {
             foreach (var quest in questList)
@@ -151,9 +151,9 @@ public class UIQuest : UIPanel
 
         ShowQuestDetailInfo(SelectedQuestSlot);
     }
-    public override void OnClickCloseButton()
+    public override void Close()
     {
-        base.OnClickCloseButton();
+        base.Close();
     }
 
     public void OnClickCompletedQuestTab()

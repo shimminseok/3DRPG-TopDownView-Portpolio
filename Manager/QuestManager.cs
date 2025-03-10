@@ -13,7 +13,6 @@ public class QuestManager : MonoBehaviour
     Dictionary<QuestCategory, List<SaveQuestData>> activeQuests = new Dictionary<QuestCategory, List<SaveQuestData>>();
 
 
-    public event Action<List<SaveQuestData>> OnQuestListUpdated;
     public event Action<SaveQuestData> OnQuestCountChanged;
     public event Action<SaveQuestData> OnQuestAccepted;
     public event Action<SaveQuestData> OnQuestCompleted;

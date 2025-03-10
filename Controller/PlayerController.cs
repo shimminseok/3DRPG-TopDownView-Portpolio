@@ -66,6 +66,8 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
     public event Action<int, int> OnHealthChanged;
     public event Action<int, int> OnMPChanged;
     public event Action OnPlayerDeath;
+
+    BGM currentArena;
     protected override void Awake()
     {
         base.Awake();
@@ -86,7 +88,6 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
         characterStat.CurrentMP.OnStatChanged += UpdateMP;
         characterStat.MoveSpd.OnStatChanged += UpdateMovementSpeed;
         characterStat.AttackSpd.OnStatChanged += UpdateAttackSpeed;
-
     }
     void Start()
     {
@@ -96,6 +97,7 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
 
     void Update()
     {
+
         if (currentState == CharacterState.Dead || currentState == CharacterState.Stun)
             return;
 
@@ -217,9 +219,9 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
         {
             return;
         }
-        UseSkill(_mousePos,_data);
+        UseSkill(_mousePos, _data);
     }
-    public void UseSkill(Vector3 _mousePos,SaveSkillData _data)
+    public void UseSkill(Vector3 _mousePos, SaveSkillData _data)
     {
         if (_data == null)
         {
@@ -301,9 +303,8 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
             return;
 
         _damage = CalculateDamage(_damage);
-        Debug.Log($"플레이어가 {_attacker}에게 공격당했습니다 : -{_damage}");
         characterStat.CurrentHP.ModifyAllValue(_damage);
-
+        DamageTextSpawner.Instance.ShowDamage(_damage, transform.position + Vector3.up * 0.5f);
         if (characterStat.CurrentHP.FinalValue <= 0)
         {
             Die();
@@ -388,4 +389,5 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
         characterStat.MoveSpd.OnStatChanged -= UpdateMovementSpeed;
         characterStat.AttackSpd.OnStatChanged -= UpdateAttackSpeed;
     }
+
 }
