@@ -33,10 +33,16 @@ public class MonsterSpawner : MonoBehaviour
     {
         while (true)
         {
-            yield return new WaitForSeconds(respawnTime);
+            if (isFirstInArea)
+                yield return new WaitForSeconds(respawnTime);
 
             if (activeMonsters.Count >= maxSpawnCount)
+            {
+                if (!isFirstInArea)
+                    isFirstInArea = true;
+
                 continue;
+            }
 
 
             SpawnMonster();
@@ -87,7 +93,10 @@ public class MonsterSpawner : MonoBehaviour
         for (int i = 0; i < activeMonsters.Count; i++)
         {
             if (!activeMonsters[i].IsChasing)
+            {
                 ObjectPoolManager.Instance.ReturnObject(activeMonsters[i].gameObject);
+                isFirstInArea = false;
+            }
         }
 
     }

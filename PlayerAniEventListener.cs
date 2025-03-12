@@ -28,7 +28,10 @@ public class PlayerAniEventListener : AniEventListener
     void Attack()
     {
         attackAreaCollider.PerformAttack();
-        
+    }
+    void FootStepSound()
+    {
+        AudioManager.Instance?.PlaySFX(SFX.Foot);
     }
     void EndAnimation()
     {

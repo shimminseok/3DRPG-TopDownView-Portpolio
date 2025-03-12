@@ -6,6 +6,12 @@ using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent(typeof(MonsterStat))]
+[RequireComponent(typeof(MonsterAnimator))]
+[RequireComponent(typeof(BuffManager))]
+[RequireComponent(typeof(CharacterStatus))]
+[RequireComponent(typeof(MonsterAniEventListener))]
+[RequireComponent(typeof(NavMeshAgent))]
+[RequireComponent(typeof(CapsuleCollider))]
 public class MonsterController : CharacterControllerBase, IDamageable, IMoveable, IAttacker, IDisplayable
 {
     [Header("Component")]
@@ -48,7 +54,13 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
         monsterData = TableLoader.Instance.GetTable<MonsterTable>()?.GetMonsterDataByID(ID);
         GetComponents();
         Init();
-
+        gameObject.layer = LayerMask.NameToLayer("Enemy");
+        if (monsterData.IsAggressive)
+        {
+            GameObject go = new GameObject("DetectionRange");
+            go.transform.SetParent(transform, false);
+            go.AddComponent<DetectionRange>();
+        }
     }
     void GetComponents()
     {
@@ -56,8 +68,9 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
         characterStatus = GetComponent<CharacterStatus>();
         buffManager = GetComponent<BuffManager>();
         agent = GetComponent<NavMeshAgent>();
-        objectRenderer = GetComponentInChildren<Renderer>();
         monsterStat = GetComponent<MonsterStat>();
+
+
     }
     void UpdateHealth(float _newValue)
     {
@@ -98,6 +111,14 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
         switch (currentState)
         {
             case CharacterState.Idle:
+                if(target != null)
+                {
+                    HandleAttack();
+                }
+                else if(currentState != CharacterState.Idle)
+                {
+                    ChangeCharacterState(CharacterState.Idle);
+                }
                 break;
             case CharacterState.Move:
                 Move(target.Transform.position);
@@ -111,6 +132,7 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
             case CharacterState.Dead:
                 break;
             case CharacterState.Hit:
+                animator.ResetTrigger("Attack");
                 break;
         }
     }
@@ -133,15 +155,15 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
         ChangeCharacterState(CharacterState.Hit);
         ApplyDamage(_damage);
 
-        StartCoroutine(HandleTargeting(_attacker, 1f));
+        StartCoroutine(HandleTargeting(_attacker));
         Debug.Log($"{gameObject.name}가 {_attacker}에게 공격당했습니다 : -{_damage}");
     }
-    IEnumerator HandleTargeting(IAttacker _attacker, float _stunDuration)
+    public IEnumerator HandleTargeting(IAttacker _attacker, float _stunDuration = 0)
     {
         yield return new WaitForSeconds(_stunDuration);
         if (currentState == CharacterState.Dead)
             yield break;
-        if (_attacker is IDamageable damable && !monsterData.IsAggressive && target == null)
+        if (_attacker is IDamageable damable  && target == null)
         {
             target = damable;
         }
@@ -160,9 +182,12 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
     }
     void HandlePlayerDeath()
     {
-        target = null;
-        agent.ResetPath();
-        ChangeCharacterState(CharacterState.Return);
+        if(target != null)
+        {
+            target = null;
+            ChangeCharacterState(CharacterState.Return);
+        }
+
     }
     public int CalculateDamage(int _dam)
     {
@@ -189,6 +214,11 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
         monsterStat.CurrentHP.OnStatChanged -= UpdateHealth;
         PlayerController.Instance.OnPlayerDeath -= HandlePlayerDeath;
         PlayerController.Instance.characterStat.GainExp(50);
+        DropGold();
+        DropItem();
+
+        target = null;
+
     }
     public void Move(Vector3 _moveDir)
     {
@@ -244,7 +274,7 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
     #region Attack
     public void HandleAttack()
     {
-        if (Vector3.Distance(transform.position, target.Transform.position) > monsterData.AttackRangeData.Range)
+        if (Vector3.Distance(transform.position, target.Transform.position) > monsterData.AttackRangeData.Range && currentState != CharacterState.Attack)
         {
             ChangeCharacterState(CharacterState.Move);
         }
@@ -256,10 +286,8 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
     }
     public void Attack(IDamageable _target)
     {
-
         target = _target;
         _target.TakeDamage(Mathf.RoundToInt(monsterStat.Attack.FinalValue));
-        Debug.Log($"Monster AttackDam {monsterStat.Attack.FinalValue}");
     }
     #endregion
     bool IsInView()
@@ -283,6 +311,33 @@ public class MonsterController : CharacterControllerBase, IDamageable, IMoveable
     {
         if (OnDeath == null || !OnDeath.GetInvocationList().Contains(_addEffect))
             OnDeath += _addEffect;
+    }
+    void DropGold()
+    {
+        if(ShouldDrop(monsterData.dropGoldChance))
+        {
+            int goldAmount = UnityEngine.Random.Range(monsterData.minDropGold, monsterData.maxDropGold + 1);
+            AccountManager.Instance.AddGold(goldAmount);
+        }
+    }
+    public void DropItem()
+    {
+        foreach (var dropItem in monsterData.dropItems)
+        {
+            if(ShouldDrop(dropItem.itemChance))
+            {
+                SaveItemData item = new SaveItemData()
+                {
+                    ItemID = dropItem.ItemID,
+                    Quantity = UnityEngine.Random.Range(dropItem.minItemCount, dropItem.maxItemCount + 1)
+                };
+                InventoryManager.Instance.AddItem(item);
+            }
+        }
+    }
+    bool ShouldDrop(float _chance)
+    {
+        return UnityEngine.Random.Range(0f, 1f) <= _chance;
     }
 
 }

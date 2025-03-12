@@ -35,6 +35,8 @@ public class InputHandler : MonoBehaviour
     IDisplayable currentTarget;
     Vector3 lastMousePosion;
     SkillManager skillManager;
+
+    List<KeyCode> itemKey = new List<KeyCode>();
     private void Awake()
     {
         if (Instance == null)
@@ -66,6 +68,8 @@ public class InputHandler : MonoBehaviour
         {
             hudSkillSlotMapping[skillHotKeys[i]] = UIHUD.Instance.GetHUDSkillSlot(i);
         }
+
+        itemKey = hudItemSlotMapping.Keys.ToList();
     }
     void Update()
     {
@@ -132,18 +136,23 @@ public class InputHandler : MonoBehaviour
         {
             UIManager.Instance.CheckOpenPopup(UICharacterInfo.Instance);
         }
-        if(Input.GetKeyDown(KeyCode.Escape))
+        if (Input.GetKeyDown(KeyCode.Escape))
         {
             UIManager.Instance.HandleEscapeKey();
         }
     }
     void HandleHotKeyInput()
     {
-        foreach (var key in hudItemSlotMapping.Keys)
+
+        if (!Input.anyKeyDown)
+            return;
+
+        foreach (var key in itemKey)
         {
             if (Input.GetKeyDown(key))
             {
                 OnUseItem?.Invoke(key);
+                break;
             }
         }
         foreach (var key in hudSkillSlotMapping.Keys)
@@ -152,6 +161,7 @@ public class InputHandler : MonoBehaviour
             {
 
                 OnSkill?.Invoke(LookMousePointer(), hudSkillSlotMapping[key].assigendSkill);
+                break;
             }
         }
 
@@ -163,6 +173,7 @@ public class InputHandler : MonoBehaviour
             return;
 
         Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+
         if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, 1 << LayerMask.NameToLayer("NPC") | 1 << LayerMask.NameToLayer("Enemy")))
         {
             if (hit.collider.TryGetComponent<IDisplayable>(out IDisplayable displayable))
@@ -182,7 +193,6 @@ public class InputHandler : MonoBehaviour
             currentTarget = null;
         }
     }
-
     public void ClearInputs()
     {
         MovementInput = Vector2.zero;

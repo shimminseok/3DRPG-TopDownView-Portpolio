@@ -23,8 +23,6 @@ public class UIDescription : UIPanel
     [Header("Accept Quest")]
     [SerializeField] UIQuestAccept uiQuestAccept;
 
-    public QuestData SelectedQuestData;
-
     bool isFinishText;
     public bool isDialogueRunning;
 
@@ -33,7 +31,7 @@ public class UIDescription : UIPanel
 
     NPCController controller;
 
-    public bool isInputNextDialogue;
+    bool isInputNextDialogue;
 
 
     protected override void Awake()
@@ -57,13 +55,13 @@ public class UIDescription : UIPanel
     public void ResetDescription()
     {
         data = null;
-
         npcName.text = string.Empty;
         decription.text = string.Empty;
+        StopAllCoroutines();
     }
     public void StartDefaultDialogue(NPCController _controller)
     {
-
+        ResetDescription();
         UIManager.Instance.AllClosePanel();
         if (currentCoroutine != null)
         {
@@ -126,6 +124,7 @@ public class UIDescription : UIPanel
             StartCoroutine(StartDialogue(_data.PreQuestDialogues, () => uiQuestAccept.ShowQuestAcceptUI(_data)));
         else
         {
+
             if (acceptSaveData.IsCompleted)
             {
                 StartCoroutine(StartDialogue(_data.PostQuestDialogues, () => uiQuestAccept.ShowQuestAcceptUI(_data)));

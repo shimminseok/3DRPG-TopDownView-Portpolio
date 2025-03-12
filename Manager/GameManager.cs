@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Playables;
 using UnityEngine.SceneManagement;
 
 [DefaultExecutionOrder(-100)]
@@ -12,8 +13,8 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
-    public Transform RespawnPoint;
-
+    public Vector3 RespawnPoint;
+    public Vector3 SaveRespawnPoint;
 
     void Awake()
     {
@@ -46,6 +47,7 @@ public class GameManager : MonoBehaviour
         {
             gameSaveData.ResisteredItems[item.slotHotKey] = item.registedInventoryIndex;
         }
+
         gameSaveData.VectorData = new List<float> { PlayerController.Instance.transform.position.x, PlayerController.Instance.transform.position.y, PlayerController.Instance.transform.position.z };
         SaveLoadManager.SaveData(gameSaveData, "SaveData");
     }
@@ -55,18 +57,18 @@ public class GameManager : MonoBehaviour
     }
     void OnSceneLoaded(Scene _scene, LoadSceneMode _mode)
     {
-        GameObject targetObj = GameObject.Find("StartingPoint");
+        GameObject targetObj = GameObject.FindWithTag("StartingPoint");
+        var loadData = LoadGameData();
         if (targetObj != null)
         {
-            RespawnPoint = targetObj.transform;
+            RespawnPoint = targetObj.transform.position;
+            SaveRespawnPoint = targetObj.transform.position;
         }
-        Vector3 loadPostion = LoadGameData().VectorData.Count != 0 ? new Vector3(LoadGameData().VectorData[0], LoadGameData().VectorData[1], LoadGameData().VectorData[2]) : Vector3.zero;
-        if (loadPostion != Vector3.zero && loadPostion != RespawnPoint.position)
+        if (loadData.VectorData.Count != 0)
         {
-            RespawnPoint.position = loadPostion;
+            Vector3 loadPosition = new Vector3(loadData.VectorData[0], loadData.VectorData[1], loadData.VectorData[2]);
+            RespawnPoint = loadPosition;
         }
-
-
     }
     private void OnDestroy()
     {

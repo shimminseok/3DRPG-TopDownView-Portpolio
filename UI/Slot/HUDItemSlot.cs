@@ -59,6 +59,7 @@ public class HUDItemSlot : MonoBehaviour, IDropHandler
         icon.sprite = SpriteAtlasManager.Instance.GetSprite("Item", itemData.GetItemData().ItemImg);
         itemQtyText.text = itemData.Quantity.ToString();
         registedInventoryIndex = _index;
+
         InventoryManager.Instance.OnInventorySlotUpdate += UpdateHUDSlot;
     }
     void UnRegistedItem()
@@ -84,7 +85,9 @@ public class HUDItemSlot : MonoBehaviour, IDropHandler
         if (_index != registedInventoryIndex)
             return;
 
-        SetItemSlot(_index);
+
+        itemQtyText.text = itemData.Quantity.ToString();
+        //SetItemSlot(_index);
     }
 
     public SaveItemData GetItemData()

@@ -95,7 +95,6 @@ public class UIShop : UIPanel
 
         if (!AccountManager.Instance.IsEnoughtGold(totalBuyItemPrice + _data.Price))
         {
-            UIHUD.Instance.OnAletMessage?.Invoke("골드가 부족합니다.");
             return;
         }
 

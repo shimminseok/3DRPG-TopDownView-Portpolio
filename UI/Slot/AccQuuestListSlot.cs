@@ -24,30 +24,23 @@ public class AccQuuestListSlot : MonoBehaviour, ISelectableSlot
 
     public void OnClickSlot()
     {
-        selectedImg.enabled = true;
-        UIDescription.Instance.OnClickAcceptQuest(data);
-        QuestManager.Instance.OnTargetAchieved(QuestTargetType.NPC, npcID);
-    }
-
-    public void SelectedSlot()
-    {
-        selectedImg.enabled = true;
-        UIDescription.Instance.OnClickAcceptQuest(data);
-        QuestManager.Instance.OnTargetAchieved(QuestTargetType.NPC, npcID);
-    }
-
-    public void DeSelectedSlot()
-    {
-        selectedImg.enabled = false;
-    }
-
-    public void OnPointerClick(PointerEventData eventData)
-    {
         if (isSelected)
             DeSelectedSlot();
         else
             SelectedSlot();
 
         selectedImg.enabled = isSelected;
+    }
+
+    public void SelectedSlot()
+    {
+        selectedImg.enabled = true;
+        QuestManager.Instance.OnTargetAchieved(QuestTargetType.NPC, npcID);
+        UIDescription.Instance.OnClickAcceptQuest(data);
+    }
+
+    public void DeSelectedSlot()
+    {
+        selectedImg.enabled = false;
     }
 }

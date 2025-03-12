@@ -47,7 +47,7 @@ public class EnhancementManager : MonoBehaviour
         {
             if (!CheckMaterialInInventory(mat))
             {
-                Debug.LogWarning($"재료가 부족합니다. {mat.MaterialID}");
+                UIHUD.Instance.OnAletMessage($"재련 재료가 부족합니다.");
                 return;
             }
         }

@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
 
-public class QuestListSlot : MonoBehaviour
+public class QuestListSlot : MonoBehaviour, ISelectableSlot
 {
     [SerializeField] TextMeshProUGUI questTypeTxt;
     [SerializeField] TextMeshProUGUI questName;
@@ -35,7 +35,17 @@ public class QuestListSlot : MonoBehaviour
         if (data == null)
             return;
     }
+    public void OnClickSlot()
+    {
+        if (isShowHUDQuest)
+        {
+            DeSelectedSlot();
+        }
+        else
+            SelectedSlot();
 
+        isShowHUDQuest = selectedImg.enabled;
+    }
     public void SelectedSlot()
     {
         UIQuest.Instance.SelectedQuest(this);

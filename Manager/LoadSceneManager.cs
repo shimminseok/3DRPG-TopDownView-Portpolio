@@ -7,7 +7,6 @@ public class LoadSceneManager : MonoBehaviour
 {
     public static LoadSceneManager Instance { get; private set; }
 
-    [SerializeField] string loadingSceneName = "";
 
     private void Awake()
     {

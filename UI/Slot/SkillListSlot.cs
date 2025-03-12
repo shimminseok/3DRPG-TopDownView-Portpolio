@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class SkillListSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class SkillListSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler,ISelectableSlot
 {
     [SerializeField] Image skillIcon;
     [SerializeField] TextMeshProUGUI skillName;

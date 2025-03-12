@@ -42,41 +42,64 @@ public class InventoryManager : MonoBehaviour
         // 스택형 아이템
         if (_item.GetItemData().IsStackable)
         {
-            SaveItemData findItem = inventory.Find(x => x != null && x.ItemID == _item.ItemID);
-            if (findItem == null)
-            {
-                // To Do 인벤토리가 꽉찼는지 확인
-                int index = inventory.IndexOf(null);
-                if (index < 0)
-                {
-                    Debug.Log("인벤토리가 가득 찼습니다.");
-                    return;
-                }
-                findItem = _item.DeepCopy();
-                inventory[index] = findItem;
-                OnInventorySlotUpdate?.Invoke(index);
-            }
-            else
-            {
-                int index = inventory.IndexOf(findItem);
-                findItem.Quantity += _item.Quantity;
-                OnInventorySlotUpdate?.Invoke(index);
-            }
+            AddStackableItem(_item);
 
         }
         else //추가하는 아이템이 겹쳐지지않는 아이템
         {
-            int enptySlotCnt = inventory.FindAll(x => x == null).Count;
-            if (enptySlotCnt < _item.Quantity)
+            AddNonStackableItem(_item);
+        }
+
+        UIHUD.Instance.OnGetItemDisplayed(_item);
+    }
+    /// <summary>
+    /// 스택형 아이템을 추가하는 함수
+    /// </summary>
+    /// <param name="_item"></param>
+    void AddStackableItem(SaveItemData _item)
+    {
+        SaveItemData findItem = inventory.Find(x => x != null && x.ItemID == _item.ItemID);
+        int index = 0;
+        if (findItem == null)
+        {
+            // To Do 인벤토리가 꽉찼는지 확인
+            index = inventory.IndexOf(null);
+            if (index < 0)
             {
-                Debug.Log("인벤토리 공간이 부족하여 구매 할 수 없습니다.");
+                Debug.Log("인벤토리가 가득 찼습니다.");
                 return;
             }
-            SaveItemData item = _item.DeepCopy();
-            item.Quantity = 1;
-            for (int i = 0; i < _item.Quantity; i++)
+            findItem = _item.DeepCopy();
+            inventory[index] = findItem;
+        }
+        else
+        {
+            index = inventory.IndexOf(findItem);
+            findItem.Quantity += _item.Quantity;
+        }
+        OnInventorySlotUpdate?.Invoke(index);
+    }
+    /// <summary>
+    /// 비스택형 아이템을 추가하는 함수
+    /// </summary>
+    /// <param name="_item"></param>
+    void AddNonStackableItem(SaveItemData _item)
+    {
+        int emptySlotCount = inventory.Count(x => x == null);
+
+        if (emptySlotCount < _item.Quantity)
+        {
+            Debug.Log("인벤토리 공간이 부족하여 구매할 수 없습니다.");
+            return;
+        }
+
+        for (int i = 0; i < _item.Quantity; i++)
+        {
+            int index = inventory.IndexOf(null);
+            if (index >= 0)
             {
-                int index = inventory.FindIndex(x => x == null);
+                SaveItemData item = _item.DeepCopy();
+                item.Quantity = 1;
                 inventory[index] = item;
                 OnInventorySlotUpdate?.Invoke(index);
             }
@@ -130,19 +153,17 @@ public class InventoryManager : MonoBehaviour
                         {
                             PlayerController.Instance.characterStat.RecoverHP((int)stat.Value);
                             //회복 이펙트 추가
-                            Debug.Log($"{_item.GetItemData().Name}을 사용하여 HP {stat.Value} 회복!");
                         }
                         else if (stat.Key == StatType.HPRegen)
                         {
                             PlayerController.Instance.characterStat.RecoverMP((int)stat.Value);
-                            Debug.Log($"{_item.GetItemData().Name}을 사용하여 MP {stat.Value} 회복!");
                         }
                     }
 
                     break;
                 }
             case ItemType.Material:
-                {                    
+                {
                     break;
                 }
         }

@@ -66,8 +66,7 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
     public event Action<int, int> OnHealthChanged;
     public event Action<int, int> OnMPChanged;
     public event Action OnPlayerDeath;
-
-    BGM currentArena;
+    public event Action OnPlayerRevive;
     protected override void Awake()
     {
         base.Awake();
@@ -93,6 +92,9 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
     {
         SetJobData();
         Init();
+
+        agent.Warp(GameManager.Instance.RespawnPoint);
+
     }
 
     void Update()
@@ -119,7 +121,6 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
     protected override void Init()
     {
         base.Init();
-        agent.Warp(GameManager.Instance.RespawnPoint.localPosition);
     }
     void SetJobData()
     {
@@ -341,20 +342,29 @@ public class PlayerController : CharacterControllerBase, IMoveable, IAttacker, I
         InputHandler.Instance.OnMove -= HandleMove;
         InputHandler.Instance.OnAttack -= HandleAttack;
         InputHandler.Instance.OnSkill -= HandleSkill;
+
+
         OnPlayerDeath?.Invoke();
         agent.ResetPath();
         characterStat.ResetModify();
+        YesOrNoPopup.Instance.SetMessage("캐릭터가 사망했습니다. 마을에서 부활 하시겠습니까?");
+        YesOrNoPopup.Instance.SetYesButton(() =>
+        {
+            Revive();
+        }, "부활");
+        YesOrNoPopup.Instance.Open();
 
-        StartCoroutine(Revive());
     }
-    private IEnumerator Revive()
+    private void Revive()
     {
-        yield return new WaitUntil(() => Input.GetKey(KeyCode.Escape));
         InputHandler.Instance.OnMove += HandleMove;
         InputHandler.Instance.OnAttack += HandleAttack;
         InputHandler.Instance.OnSkill += HandleSkill;
         Init();
-        playerAnimator.animator.Play("Combat_2H_Ready");
+        agent.Warp(GameManager.Instance.SaveRespawnPoint);
+
+        OnPlayerRevive?.Invoke();
+        playerAnimator.animator.SetTrigger("Revive");
         characterStat.InitializeFromJob(JobData);
     }
     void OnTriggerEnter(Collider other)

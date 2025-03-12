@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using DG.Tweening;
 
 public class UIHUD : MonoBehaviour
 {
@@ -49,10 +48,20 @@ public class UIHUD : MonoBehaviour
     [SerializeField] CanvasGroup alertMessageCanvas;
     [SerializeField] TextMeshProUGUI alertMessage;
 
+    [Header("DropItem")]
+    [SerializeField] List<HUDDropItemSlot> hudDropItems = new List<HUDDropItemSlot>();
+    Queue<SaveItemData> dropQueue = new Queue<SaveItemData>();
+    bool isProcessing = false;
+    int curSlotIndex = 0;
+
+    [Header("PlayerDeath")]
+    [SerializeField] GameObject PlayerDeathBG;
     public List<HUDItemSlot> HUDItemSlot => hudItemSlots;
 
 
     public Action<string> OnAletMessage;
+    public Action<SaveItemData> OnGetItemDisplayed;
+    public Action<int> OnGetGoldDisplayed;
     private void Awake()
     {
         if (Instance == null)
@@ -66,6 +75,9 @@ public class UIHUD : MonoBehaviour
         }
 
         OnAletMessage += ShowAlertMessage;
+        OnGetItemDisplayed += ShowGetItem;
+        OnGetGoldDisplayed += ShowGetGold;
+
     }
     void Start()
     {
@@ -80,6 +92,9 @@ public class UIHUD : MonoBehaviour
         PlayerController.Instance.characterStat.OnGainExp += UpdateExpUI;
         PlayerController.Instance.characterStat.OnLevelUp += UpdateLevelUI;
 
+        PlayerController.Instance.OnPlayerDeath += PlayerDeath;
+        PlayerController.Instance.OnPlayerRevive += PlayerRevive;
+
         int index = 0;
         foreach (var slot in GameManager.Instance.LoadGameData().ResisteredSkills)
         {
@@ -88,21 +103,29 @@ public class UIHUD : MonoBehaviour
         }
 
         index = 0;
-        foreach(var slot in GameManager.Instance.LoadGameData().ResisteredItems)
+        foreach (var slot in GameManager.Instance.LoadGameData().ResisteredItems)
         {
             hudItemSlots[index].slotHotKey = slot.Key;
             hudItemSlots[index++].SetItemSlot(slot.Value);
         }
     }
+
+    private void Instance_OnPlayerRevive()
+    {
+        throw new NotImplementedException();
+    }
+
     public void UpdateHPUI(int _current, int _max)
     {
         hpText.text = $"{_current} / {_max}";
+        hpBar.DOKill();
         hpBar.DOFillAmount((float)_current / _max, 0.3f);
     }
     public void UpdateMPUI(int _current, int _max)
     {
         mpText.text = $"{_current} / {_max}";
-        mpBar.fillAmount = (float)_current / _max;
+        mpBar.DOKill();
+        mpBar.DOFillAmount((float)_current / _max, 0.3f);
     }
     public void UpdateExpUI(float _current, int _max)
     {
@@ -120,7 +143,7 @@ public class UIHUD : MonoBehaviour
     }
     public void UpdateAreaName(string _areaName)
     {
-        areaName.DOFade(1, 3f).SetEase(Ease.OutExpo).From(0).OnComplete(() => areaName.DOFade(0,1.5f).SetEase(Ease.OutExpo));
+        areaName.DOFade(1, 3f).SetEase(Ease.OutExpo).From(0).OnComplete(() => areaName.DOFade(0, 1.5f).SetEase(Ease.OutExpo));
         areaName.text = _areaName;
 
     }
@@ -232,8 +255,14 @@ public class UIHUD : MonoBehaviour
             findSlot.UpdateHUDQuestSlot(_quest);
         }
     }
-
-
+    void PlayerDeath()
+    {
+        PlayerDeathBG.SetActive(true);
+    }
+    void PlayerRevive()
+    {
+        PlayerDeathBG.SetActive(false);
+    }
     void ShowAlertMessage(string _msg)
     {
         alertMessage.text = _msg;
@@ -251,9 +280,46 @@ public class UIHUD : MonoBehaviour
                 });
             });
     }
+    public void ShowGetItem(SaveItemData _item)
+    {
+        dropQueue.Enqueue(_item);
+        //hudDropItems[curSlotIndex].SetItemInfo(_item);
+        //curSlotIndex = (curSlotIndex + 1) % hudItemSlots.Count;
+        if (!isProcessing)
+            StartCoroutine(ProcessDropQueue());
+    }
+    IEnumerator ProcessDropQueue()
+    {
+        isProcessing = true;
+        while (dropQueue.Count > 0)
+        {
+            //if (hudDropItems[curSlotIndex].IsShow)
+            //{
+            //    yield return new WaitUntil(() => !hudDropItems[curSlotIndex].IsShow);
+            //    continue;
+            //}
+
+            SaveItemData itemData = dropQueue.Dequeue();
+
+            hudDropItems[curSlotIndex].SetItemInfo(itemData);
+            curSlotIndex = (curSlotIndex + 1) % hudItemSlots.Count;
+
+            yield return new WaitForSeconds(0.1f);
+        }
+
+        isProcessing = false;
+    }
+    public void ShowGetGold(int _amount)
+    {
+
+        hudDropItems[curSlotIndex].SetGoldInfo(_amount);
+        curSlotIndex = (curSlotIndex + 1) % hudItemSlots.Count;
+    }
 
     private void OnDestroy()
     {
         OnAletMessage -= ShowAlertMessage;
+        OnGetItemDisplayed -= ShowGetItem;
+        OnGetGoldDisplayed -= ShowGetGold;
     }
 }

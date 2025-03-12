@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -104,7 +105,7 @@ public class UIQuestAccept : UIPanel
         var questList = questNPC.GetAvailQuestList();
 
         SaveQuestData questData = QuestManager.Instance.GetCompleteQuestByNPCID(_controller.NPC_ID);
-        if (questData != null && !questList.Exists(x => x.ID != questData.QuestID))
+        if (questData != null && questList.All(x => x.ID != questData.QuestID))
         {
             QuestData endNpcQuest = questData.QuestTableData;
             questList.Add(endNpcQuest);

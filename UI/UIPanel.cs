@@ -8,12 +8,13 @@ using DG.Tweening;
 public class UIPanel : MonoBehaviour
 {
     [Header("Base")]
-    public GameObject Content;
-    public CanvasGroup CanvasGroup;
+    [SerializeField] GameObject Content;
+    [SerializeField] CanvasGroup CanvasGroup;
 
     protected virtual void Awake()
     {
         CanvasGroup = GetComponent<CanvasGroup>() ?? gameObject.AddComponent<CanvasGroup>();
+        Content.SetActive(false);
     }
     public virtual void Open()
     {

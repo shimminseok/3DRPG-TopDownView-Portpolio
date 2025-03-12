@@ -23,6 +23,16 @@ public class EnhancementItemListSlot : SlotBase,ISelectableSlot
 
 
     }
+    public void OnClickSlot()
+    {
+        if (isSelected)
+            DeSelectedSlot();
+        else
+            SelectedSlot();
+
+        isSelected = !isSelected;
+        selectedImg.enabled = isSelected;
+    }
     public void SelectedSlot()
     {
         UIEnhancement.Instance.SetEnhanceTargetItem(this);
@@ -31,17 +41,6 @@ public class EnhancementItemListSlot : SlotBase,ISelectableSlot
     public void DeSelectedSlot()
     {
         EnhancementManager.Instance.OnEnhancedItem -= UpdateEnhancementCount;
-    }
-    public void OnPointerClick(PointerEventData eventData)
-    {
-        if(isSelected)
-            DeSelectedSlot();
-        else
-            SelectedSlot();
-
-        isSelected = !isSelected;
-        selectedImg.enabled = isSelected;
-
     }
     public void UpdateEnhancementCount(SaveItemData _itemData)
     {

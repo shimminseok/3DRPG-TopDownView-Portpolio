@@ -37,10 +37,10 @@ public class AttackAreaCollider : MonoBehaviour
 
     public void AttackStart()
     {
-        hitEnemies = Physics.OverlapSphere(transform.position, rangeData.Range, targetLayer).ToList();
     }
     public void PerformAttack()
     {
+        hitEnemies = Physics.OverlapSphere(transform.position, rangeData.Range, targetLayer).ToList();
         foreach (var target in hitEnemies)
         {
             Vector3 dirToTarget = (target.transform.position - transform.position).normalized;

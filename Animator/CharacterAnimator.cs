@@ -8,15 +8,15 @@ public class CharacterAnimator : MonoBehaviour
     public Animator animator;
 
     public AnimatorStateInfo currentAniStateInfo;
-    [SerializeField] string movingParam = "isMove";
+    [SerializeField] string movingParam = "isMoving";
     [SerializeField] string attackParam = "Attack";
     [SerializeField] string stunParam = "isStun";
-    [SerializeField] string dieParam = "Dead";
+    [SerializeField] string dieParam = "Die";
 
 
     protected virtual void Awake()
     {
-        //animator = GetComponent<Animator>();
+        animator = GetComponent<Animator>();
     }
     public virtual void PlayMoveAnimation(bool _isMoving)
     {

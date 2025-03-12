@@ -32,14 +32,14 @@ public class AccountManager : MonoBehaviour
     public void AddGold(int _amount)
     {
         Gold += _amount;
-        Debug.Log($"∞ÒµÂ »πµÊ : {_amount}, √— ∞ÒµÂ : {Gold}");
         OnChangedGold?.Invoke(Gold);
+
+        UIHUD.Instance.OnGetGoldDisplayed?.Invoke(_amount);
     }
     public void UseGold(int _amount)
     {
         if(!IsEnoughtGold(_amount))
         {
-            Debug.Log("º“¿Ø ∞ÒµÂ∞° ∫Œ¡∑«’¥œ¥Ÿ");
             return;
         }
         Gold -= _amount;
@@ -47,7 +47,9 @@ public class AccountManager : MonoBehaviour
     }
     public bool IsEnoughtGold(int _amount)
     {
-        return Gold - _amount >= 0;
+        bool hasEnough = Gold >= _amount;
+        if (!hasEnough) UIHUD.Instance.OnAletMessage("∞ÒµÂ∞° ∫Œ¡∑«’¥œ¥Ÿ.");
+        return hasEnough;
     }
     public void ApplyGoldRewad(RewardData _reward)
     {

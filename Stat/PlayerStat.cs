@@ -35,6 +35,8 @@ public class PlayerStat : BaseStat
         }
 
         QuestManager.Instance.OnQuestReward += ApplyExpReward;
+
+        GainExp(GameManager.Instance.LoadGameData().Experience,false);
     }
     public void InitializeFromJob(JobData _jobData)
     {
@@ -51,7 +53,6 @@ public class PlayerStat : BaseStat
         MoveSpd.ModifyBaseValue(1f);
 
         //юс╫ц
-        Level.ModifyBaseValue(1);
     }
 
     public void ResetModify()
@@ -66,16 +67,17 @@ public class PlayerStat : BaseStat
     {
         CurrentMP.ModifyBaseValue(_value,0,MP.FinalValue);
     }
-    public void GainExp(int _amount)
+    public void GainExp(int _amount, bool _isNonEffect = false)
     {
+        GameManager.Instance.LoadGameData().Experience += _amount;
         Experience.ModifyBaseValue(_amount);
-        CheckLevelUp();
+        CheckLevelUp(_isNonEffect);
     }
     void ApplyExpReward(RewardData _reward)
     {
         GainExp(_reward.EXPReward);
     }
-    void CheckLevelUp()
+    void CheckLevelUp(bool _isNonEffect)
     {
         bool isLevelUp = false;
         while (Experience.FinalValue >= CalculateNextLevelEXP())
@@ -85,7 +87,7 @@ public class PlayerStat : BaseStat
             isLevelUp = true;
         }
         OnGainExp?.Invoke(Experience.FinalValue, CalculateNextLevelEXP());
-        if(isLevelUp)
+        if(isLevelUp && _isNonEffect)
             OnLevelUp?.Invoke((int)Level.FinalValue);
     }
     void LevelUp(float _remainExp)

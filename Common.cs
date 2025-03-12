@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using Newtonsoft.Json;
 using System;
 using System.Collections;
@@ -350,6 +351,12 @@ public class MonsterData
     public float AttackSpd;
     [Header("AttackRangeData")]
     public AttackRangeData AttackRangeData;
+
+    [Header("DropItem")]
+    [Range(0, 1)] public float dropGoldChance;
+    public int minDropGold;
+    public int maxDropGold;
+    public List<DropItem> dropItems;
 }
 [Serializable]
 public class ItemData
@@ -401,6 +408,14 @@ public class ItemStats
     {
         Stats[_type] = _value;
     }
+}
+[Serializable]
+public class DropItem
+{
+    public int ItemID;
+    public int minItemCount;
+    public int maxItemCount;
+    [Range(0f,1f)] public float itemChance;
 }
 [Serializable]
 public class StatEntry
@@ -557,7 +572,6 @@ public class Stat
         BaseValue = Mathf.Clamp(BaseValue + _value, _min, _max);
         OnStatChanged?.Invoke(FinalValue);
 
-        Debug.Log($"{Type} Update {FinalValue}");
     }
     /// <summary>
     /// BuffValue를 변경하는 메서드
@@ -569,7 +583,6 @@ public class Stat
         BuffValue += _flat;
         PercentValue += _percent;
         OnStatChanged?.Invoke(FinalValue);
-        Debug.Log($"{Type} Update {FinalValue}");
 
     }
     /// <summary>
@@ -581,7 +594,6 @@ public class Stat
         IsChangeStat = true;
         EquipmentValue += _value;
         OnStatChanged?.Invoke(FinalValue);
-        Debug.Log($"{Type} Update {FinalValue}");
     }
     public void ModifyAllValue(float _value, float _percent = 0)
     {
@@ -705,6 +717,7 @@ public class GameSaveData
     public string NickName = string.Empty;
     public int Gold = 0;
     public int JobID = 1;
+    public int Experience = 0;
     public List<SaveItemData> Inventory;
     public Dictionary<QuestCategory, List<SaveQuestData>> ActiveQuests = new Dictionary<QuestCategory, List<SaveQuestData>>();
     public Dictionary<ItemType, SaveItemData> EquipItems = new Dictionary<ItemType, SaveItemData>();
